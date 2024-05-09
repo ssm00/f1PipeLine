@@ -8,6 +8,8 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as selenium_exception
+import CustomException
+
 class Selenium:
     def __init__(self):
         # options
@@ -43,11 +45,10 @@ class Selenium:
             WebDriverWait(self.driver, 5).until(lambda x: x.find_element(By.CLASS_NAME, 'VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.LQeN7.BqKGqe.Jskylb.TrZEUc.lw1w4b')).click()
             print("login DONE!")
             #구글 로그인 창으로 바꿔뒀던 창 선택 다시 바꿔야 쿠키 가져올 수 있음
-            WebDriverWait(self.driver, 5).until(lambda x: x.find_element(By.CSS_SELECTOR,'[aria-label="검색"]'))
             self.driver.switch_to.window(original_window)
+            WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[aria-label="검색 아이콘"]')))
         except selenium_exception.NoSuchWindowException as e:
-            raise TooMuchLogin
-            print(e)
+            raise CustomException.TooMuchLogin()
         except Exception as e:
             print(e)
 
@@ -58,18 +59,15 @@ class TokenGenerator:
         self.cookie_list = ['csrftoken','g_state','cm_sub','ar_debug','_routing_id','sessionFunnelEventLogged','l_o','_auth','_pinterest_sess','__Secure-s_a']
 
     def generate_token(self,id,password):
-        # try:
-            self.selenium.login(id,password)
-            cookies = self.selenium.driver.get_cookies()
-            print(cookies)
-            result_cookies = ""
-            for cookie in cookies:
-                print(cookie['name'])
-                if cookie['name'] in self.cookie_list:
-                    result_cookies += cookie['name'] + "=" + cookie['value'] + '; '
-            print(result_cookies)
-        # except Exception as e:
-        #     print(e,"로그인 에러")
+        self.selenium.login(id,password)
+        cookies = self.selenium.driver.get_cookies()
+        print(cookies)
+        result_cookies = ""
+        for cookie in cookies:
+            print(cookie['name'])
+            if cookie['name'] in self.cookie_list:
+                result_cookies += cookie['name'] + "=" + cookie['value'] + '; '
+        print(result_cookies)
 
 
 se = Selenium()
