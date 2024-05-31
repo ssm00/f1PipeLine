@@ -30,20 +30,22 @@ def extract_basic_article_info(article_list):
         href = article.find("a")['href']
         article_type = article.find("a").find("figcaption").find("span").text
         article_title = article.find("a").find("figcaption").find("p").text
-        article_info_list.append(BasicArticleInfo(href, article_type, article_title))
+        pattern = r'\.([^.]+)$'
+        match = regex.search(pattern, href)
+        if match:
+            uuid = match.group(1)
+        else:
+            uuid = None
+        article_info_list.append(BasicArticleInfo(href, article_type, article_title, uuid))
     return article_info_list
 
 
 def extract_article_content(basic_article_info_list):
     for basic_article_info in basic_article_info_list:
-
         if basic_article_info.article_type == "News" or basic_article_info.article_type == "Technical" or basic_article_info.article_type == "Feature":
-            print("여기")
             article_request = re.get(basic_article_info.href).text
             article = BeautifulSoup(article_request, 'html.parser')
             article_content_cluster = article.select('article.col-span-6')
-
             print(article_content_cluster)
-
 
 main_page(1)
