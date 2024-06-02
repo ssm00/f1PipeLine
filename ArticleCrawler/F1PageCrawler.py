@@ -45,7 +45,26 @@ def extract_article_content(basic_article_info_list):
         if basic_article_info.article_type == "News" or basic_article_info.article_type == "Technical" or basic_article_info.article_type == "Feature":
             article_request = re.get(basic_article_info.href).text
             article = BeautifulSoup(article_request, 'html.parser')
-            article_content_cluster = article.select('article.col-span-6')
-            print(article_content_cluster)
+            article_content_cluster = article.find('article',{"class":"col-span-6"})
+
+            photo_list = article_content_cluster.find_all("div", {"class": "f1-breakout"})
+            p_tag_list = article_content_cluster.find_all("p")
+            print(basic_article_info.href)
+            content = ""
+            # 아티클 중 p 태그
+            for p in p_tag_list:
+                read_more = r'READ MORE'
+                if regex.search(read_more, p.text):
+                    continue
+                content += p.text + '\n'
+            for photo in photo_list:
+                img_source = photo.find("img")['src']
+                print(img_source)
+                img_name = photo.find("img")['alt']
+                print(img_name)
+                description = photo.find("figcaption").text
+                print(description)
+
+
 
 main_page(1)
