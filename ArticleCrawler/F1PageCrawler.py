@@ -7,11 +7,11 @@ import re as regex
 mainPageUrl = "https://www.formula1.com/en/latest/all?articleFilters=&page="
 
 class BasicArticleInfo:
-    def __init__(self, href, article_type, article_title, uuid):
+    def __init__(self, href, article_type, article_title, id):
         self.href = href
         self.article_type = article_type
         self.article_title = article_title
-        self.uuid = uuid
+        self.id = id
 
 
 def main_page(page_num):
@@ -64,7 +64,5 @@ def extract_article_content(basic_article_info_list):
                 print(img_name)
                 description = photo.find("figcaption").text
                 print(description)
-
-
 
 main_page(1)
