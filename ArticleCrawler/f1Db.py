@@ -45,7 +45,7 @@ class Database:
 
     def save_article_image_info(self, article_id, img_source, img_name, image_description):
         query = f"""INSERT INTO image (image_source, image_name, image_description, article_id) VALUES (%s,%s,%s,%s)"""
-        values = (article_id, img_source, img_name, image_description)
+        values = (img_source, img_name, image_description, article_id)
         self.cursor.execute(query, values)
         self.commit()
 
