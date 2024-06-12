@@ -69,10 +69,10 @@ class F1PageCrawler:
                 # 기사의 사진 저장 하기
                 for photo in photo_list:
                     img_source = photo.find("img")['src']
-                    print(img_source)
                     img_name = photo.find("img")['alt']
                     image_description = photo.find("figcaption").text
                     self.database.save_article_image_info(basic_article_info.article_id, img_source, img_name, image_description)
+
 
 with open('db_info.json', 'r') as file:
     db_info_json = json.load(file)
