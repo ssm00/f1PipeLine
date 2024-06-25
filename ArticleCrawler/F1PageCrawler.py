@@ -110,6 +110,15 @@ class F1PageCrawler:
                         img_name = self.replace_spaces_with_underscores(img_name)
                         image_description = photo.find("figcaption").text
                         self.img_download(img_source, img_name, "../download_image")
+                    elif photo.find("div",{"class","f1-carousel__slide"}) is not None:
+                        photo_slide = photo.find_all("div", {"class", "f1-carousel__slide"})
+                        for photo_in_slide in photo_slide:
+                            img_source = photo_in_slide.find("img")['src']
+                            img_name = photo_in_slide.find("img")['alt']
+                            img_name = self.replace_invalid_chars(img_name)
+                            img_name = self.replace_spaces_with_underscores(img_name)
+                            image_description = img_name
+                            self.img_download(img_source, img_name, "../download_image")
                     self.database.save_article_image_info(basic_article_info.article_id, img_source, img_name, image_description)
 
     def replace_invalid_chars(self, name):
