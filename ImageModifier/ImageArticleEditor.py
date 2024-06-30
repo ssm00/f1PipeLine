@@ -1,9 +1,38 @@
 import cv2
 from PIL import Image
+import numpy as np
 
 def add_title_to_image(image_path, icon_path, position):
     pass
 
+# article_type은
+# Information, Breaking, Official, Tech, Rumor 다섯가지로
+def add_basic_image(image_path, article_type):
+    if article_type == "Information":
+        icon_path = '../prefab/information_icon.png'
+        line_path = '../prefab/information_line_440.png'
+    elif article_type == "Breaking":
+        icon_path = '../prefab/breaking_icon.png'
+        line_path = '../prefab/breaking_line_440.png'
+    elif article_type == "Official":
+        icon_path = '../prefab/official_icon.png'
+        line_path = '../prefab/official_line_440.png'
+    elif article_type == "Tech":
+        icon_path = '../prefab/tech_icon.png'
+        line_path = '../prefab/tech_line_440.png'
+    elif article_type == "Rumor":
+        icon_path = '../prefab/rumor_icon.png'
+        line_path = '../prefab/rumor_line_440.png'
+    icon_position = (50, 700)  # (x, y)
+    line_position = (50, 780)  # (x, y)
+
+    image_with_icon = add_icon_to_image(image_path, icon_path, icon_position)
+    output_path = '../after_processing_image/' + image_path + ".png"
+    cv2.imwrite(output_path, image_with_icon)
+
+    image_with_line = add_icon_to_image(output_path, line_path, line_position)
+    output_path = '../after_processing_image/' + image_path + ".png"
+    cv2.imwrite(output_path, image_with_line)
 
 
 def add_icon_to_image(image_path, icon_path, position):
@@ -47,15 +76,20 @@ def add_icon_to_image(image_path, icon_path, position):
 
 
 # 이미지 및 아이콘 경로
-image_path = 'path/to/your/image.jpg'
-icon_path = 'path/to/your/icon.png'
+image_path = '../after_processing_image/processing_2.jpg'
+icon_path = '../prefab/information_icon.png'
+line_path = '../prefab/information_line_440.png'
 
 # 아이콘을 추가할 위치
-position = (50, 50)  # (x, y)
+icon_position = (50, 700)  # (x, y)
+line_position = (50, 780)  # (x, y)
 
 # 아이콘이 추가된 이미지 얻기
-image_with_icon = add_icon_to_image(image_path, icon_path, position)
-
+image_with_icon = add_icon_to_image(image_path, icon_path, icon_position)
 # 결과 저장
-output_path = 'path/to/output_image.jpg'
+output_path = '../after_processing_image/processing_3.jpg'
 cv2.imwrite(output_path, image_with_icon)
+
+image_with_line = add_icon_to_image(output_path, line_path, line_position)
+output_path = '../after_processing_image/processing_4.jpg'
+cv2.imwrite(output_path, image_with_line)
