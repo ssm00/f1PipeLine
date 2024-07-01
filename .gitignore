@@ -5,3 +5,4 @@ db_info.json
 account_info.json
 *.jpg
 __pycache__/
+*.png
