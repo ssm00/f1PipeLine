@@ -3,7 +3,7 @@ import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-font_path = "../prefab/SB_Window_Font/SB_agro_M.ttf"
+font_path = "../prefab/Cafe24Ohsquare-v2.0/Cafe24Ohsquare-v2.0.ttf"
 
 def add_title_to_image(image_path, icon_path, position):
     pass
@@ -203,23 +203,17 @@ def processing(image_path):
     apply_alpha_gradient_to_image(p1_path)
     add_basic_icon_to_image(p1_path, "Information")
 
-def add_text_to_image_with_box(image_path, text, position, box_size, font_path, font_size, text_color=(255, 255, 255), box_color=(0, 0, 0)):
+def add_text_to_image_with_box(image_path, text):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
-
-    Parameters:
-    - image_path: 기본 이미지 경로
-    - text: 추가할 텍스트
-    - position: 텍스트 박스를 추가할 위치 (x, y)
-    - box_size: 텍스트 박스의 크기 (width, height)
-    - font_path: 사용할 TTF 폰트 파일 경로
-    - font_size: 폰트 크기
-    - text_color: 텍스트 색상 (기본값: 흰색)
-    - box_color: 텍스트 박스 색상 (기본값: 검정색)
-
-    Returns:
-    - 텍스트 박스와 텍스트가 추가된 이미지
     """
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+    position = (120, 870)  # 텍스트를 추가할 위치 (x, y)
+    font_size = 40
+    box_size = (900, 300)  # 텍스트 박스 크기 (width, height)
+    text_color = (255, 255, 255)  # 흰색
+    line_spacing = 20
+
     # 이미지 로드
     image = Image.open(image_path).convert('RGBA')
     draw = ImageDraw.Draw(image)
@@ -231,6 +225,7 @@ def add_text_to_image_with_box(image_path, text, position, box_size, font_path, 
     lines = []
     words = text.split(' ')
     max_width, max_height = box_size
+    x, y = position
 
     while words:
         line = ''
@@ -238,18 +233,14 @@ def add_text_to_image_with_box(image_path, text, position, box_size, font_path, 
             line = line + (words.pop(0) + ' ')
         lines.append(line)
 
-    # 텍스트 박스 그리기
-    x, y = position
-
-    # 텍스트 추가
-    current_y = y
     for line in lines:
-        draw.text((x, current_y), line, font=font, fill=text_color)
-        current_y += draw.textbbox((0, 0), line, font=font)[3]
+        draw.text((x, y), line, font=font, fill=text_color)
+        y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
-    # 결과 이미지 저장
     result_image = image.convert('RGB')  # RGBA를 RGB로 변환
-    return result_image
+    # 결과 저장
+    output_path = '../after_processing_image/' + image_name + ".png"
+    result_image.save(output_path)
 
 # 이미지 경로
 image_path = '../after_processing_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
@@ -258,18 +249,9 @@ image_path = '../after_processing_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferr
 image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
 # 텍스트 추가
-text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
-position = (120, 870)  # 텍스트를 추가할 위치 (x, y)
-font_size = 40
-box_size = (900, 300)  # 텍스트 박스 크기 (width, height)
-text_color = (255, 255, 255)  # 흰색
-box_color = (0, 0, 0)  # 검정색
+text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. . 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. drama를 대비할 계획이라고 밝혔습니다. drama를 대비할 계획이라고 밝혔습니다. drama를 대비할 계획이라고 밝혔습니다. drama를 대비할 계획이라고 밝혔습니다."
 
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
-result_image = add_text_to_image_with_box(image_path, text, position, box_size, font_path, font_size, text_color, box_color)
-
-# 결과 저장
-output_path = '../after_processing_image/processing_5.png'
-result_image.save(output_path)
+add_text_to_image_with_box(image_path, text)
 
