@@ -211,9 +211,10 @@ def add_text_to_image_with_box(image_path, text):
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     position = (120, 870)  # 텍스트를 추가할 위치 (x, y)
     font_size = 40
-    box_size = (900, 300)  # 텍스트 박스 크기 (width, height)
+    box_size = (900, 370)  # 텍스트 박스 크기 (width, height)
     text_color = (255, 255, 255)  # 흰색
     line_spacing = 20
+    box_color = (255,255,255)
 
     # 이미지 로드
     image = Image.open(image_path).convert('RGBA')
@@ -228,9 +229,13 @@ def add_text_to_image_with_box(image_path, text):
     max_width, max_height = box_size
     x, y = position
 
+    #draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
     while words:
         line = ''
         while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
+            if(words[0].endswith(".")):
+                line = line + (words.pop(0) + ' ')
+                break
             line = line + (words.pop(0) + ' ')
         lines.append(line)
 
@@ -243,16 +248,45 @@ def add_text_to_image_with_box(image_path, text):
     output_path = prefix_image_path + image_name + ".png"
     result_image.save(output_path)
 
-# 이미지 경로
-image_path = prefix_image_path+'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
+def calculate_need_page_num(text):
+    lines = []
+    words = text.split(' ')
+    max_width = 900
+    max_height = 370
 
-# 이미지 로드
-image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    # 폰트 로드
+    font = ImageFont.truetype(font_path, 40)
+
+    while words:
+        line = ''
+        while words and font.getlength(line + words[0]) <= max_width and font.get:
+            if words[0].endswith("."):
+                line = line + (words.pop(0) + ' ')
+                break
+            line = line + (words.pop(0) + ' ')
+        lines.append(line.strip())
+
+    # 각 줄의 높이와 총 줄 수 계산
+    line_height = font.getlength('Test') + 20
+    total_lines = len(lines)
+    total_height = total_lines * line_height
+    return total_lines, total_height
+
+
+
+# processing("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg")
+# # 이미지 경로
+# image_path = prefix_image_path+'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
+#
+# # 이미지 로드
+# image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
 # 텍스트 추가
 text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. . 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. drama를 대비할 계획이라고 밝혔습니다. drama를 대비할 계획이라고 밝혔습니다. drama를 대비할 계획이라고 밝혔습니다. drama를 대비할 계획이라고 밝혔습니다."
 
+num = calculate_need_page_num(text)
+print(num)
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
-add_text_to_image_with_box(image_path, text)
+# add_text_to_image_with_box(image_path, text)
 
