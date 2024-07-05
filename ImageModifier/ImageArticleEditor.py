@@ -229,6 +229,7 @@ def add_text_to_image_with_box(image_path, text):
     max_width, max_height = box_size
     x, y = position
 
+
     #draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
     while words:
         line = ''
@@ -248,59 +249,30 @@ def add_text_to_image_with_box(image_path, text):
     output_path = prefix_image_path + image_name + ".png"
     result_image.save(output_path)
 
-def calculate_total_pages(text):
+def divide_text_for_one_page(text, font):
+    """
+        전체 text를 max_width, max_height 기반으로 나누기
+    """
     lines = []
     pages = []
-    words = text.split(' ')
     max_width = 900
     max_height = 370
-
-    # 폰트 로드
-    font = ImageFont.truetype(font_path, 40)
-
+    words = text.split(' ')
     while words:
         line = ''
-        while words and font.getlength(line + words[0]) <= max_width:
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + 20) * (len(lines)+1) <= max_height:
             if words[0].endswith("."):
                 line = line + (words.pop(0) + ' ')
                 break
             line = line + (words.pop(0) + ' ')
         lines.append(line.strip())
-        if(len(lines)==6):
-            pages.append(lines.copy())
-            lines.clear()
-    pages.append(lines)
-
-    print(pages)
-
-
-    # 각 줄의 높이와 총 줄 수 계산
-    line_height = font.size + 20
-    total_lines = len(lines)
-    total_height = total_lines * line_height
-    # max line height 370으로 설정
-
-    return total_lines, total_height
-
-def calculate_pages(words):
-    lines = []
-    pages = []
-    while words:
-        line = ''
-        while words and font.getlength(line + words[0]) <= max_width:
-            if words[0].endswith("."):
-                line = line + (words.pop(0) + ' ')
-                break
-            line = line + (words.pop(0) + ' ')
-        lines.append(line.strip())
-        if(len(lines)==6):
+        if (font.size + 20) * (len(lines)+1) >= max_height:
             pages.append(lines.copy())
             lines.clear()
     pages.append(lines)
     return pages
 
 def calculate_need_page_num():
-
     return 1
 
 
@@ -314,9 +286,6 @@ image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
 # 텍스트 추가
 text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
-
-num = calculate_total_pages(text)
-print(num)
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
 add_text_to_image_with_box(image_path, text)
