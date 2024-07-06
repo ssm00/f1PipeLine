@@ -5,6 +5,13 @@ from PIL import Image, ImageDraw, ImageFont
 
 prefix_image_path = "../after_processing_image/"
 font_path = "../prefab/Cafe24Ohsquare-v2.0/Cafe24Ohsquare-v2.0.ttf"
+breaking_color = "FB0045"
+information_color = "F38A4A"
+official_color = "c6ff02"
+tech_color = "4AB2F3"
+rumor_color = "f4e04b"
+
+doble_size = (2160,1350)
 
 def add_title_to_image(image_path, icon_path, position):
     pass
@@ -197,14 +204,7 @@ def apply_alpha_gradient_to_image(image_path):
     cv2.imwrite(prefix_image_path + image_name + ".png", result_image)
     return result_image
 
-def processing(image_path):
-    p1_image = resize_image(image_path)
-    image_name = os.path.splitext(os.path.basename(image_path))[0]
-    p1_path = prefix_image_path+image_name+".png"
-    apply_alpha_gradient_to_image(p1_path)
-    add_basic_icon_to_image(p1_path, "Information")
-
-def add_text_to_image_with_box(image_path, text):
+def add_text_to_image(image_path, text):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -272,12 +272,37 @@ def divide_text_for_one_page(text, font):
     pages.append(lines)
     return pages
 
-def calculate_need_page_num():
-    return 1
+def split_text_by_textboxsize(text, font, line_spacing, max_width, max_height):
+    words = text.split(' ')
+    lines = []
+    while words:
+        line = ''
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + 20) * (len(lines)+1) <= max_height:
+            if words[0].endswith("."):
+                line = line + (words.pop(0) + ' ')
+                break
+            line = line + (words.pop(0) + ' ')
+        lines.append(line.strip())
+        if (font.size + 20) * (len(lines)+1) >= max_height:
+            # 글이 길어서 height 벗어나는 경우
+            lines.clear()
+    return lines
 
+def image_processing(image_path):
+    p1_image = resize_image(image_path)
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+    p1_path = prefix_image_path+image_name+".png"
+    apply_alpha_gradient_to_image(p1_path)
+    add_basic_icon_to_image(p1_path, "Information")
 
+def make_content_image(content, image_paths ):
+    pass
 
-processing("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg")
+def make_title_image(title, sub_title, article_type):
+
+    pass
+
+image_processing("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg")
 # 이미지 경로
 image_path = prefix_image_path+'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 
@@ -288,5 +313,5 @@ image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
-add_text_to_image_with_box(image_path, text)
+add_text_to_image(image_path, text)
 
