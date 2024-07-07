@@ -280,13 +280,13 @@ def split_text_by_textboxsize(text, font, line_spacing, max_size):
     lines = []
     while words:
         line = ''
-        while words and font.getlength(line + words[0]) <= max_width and (font.size + 20) * (len(lines)+1) <= max_height:
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
             if words[0].endswith("."):
                 line = line + (words.pop(0) + ' ')
                 break
             line = line + (words.pop(0) + ' ')
         lines.append(line.strip())
-        if (font.size + 20) * (len(lines)+1) >= max_height:
+        if (font.size + line_spacing) * (len(lines)+1) >= max_height:
             # 글이 길어서 height 벗어나는 경우
             raise CustomException.OutOfTextBox(font.size)
     return lines
@@ -313,20 +313,8 @@ def add_text_to_image(image_path, text, position, font, box_size, text_color, li
     draw = ImageDraw.Draw(image)
 
     # 텍스트 줄바꿈 처리
-    lines = []
-    words = text.split(' ')
-    max_width, max_height = box_size
     x, y = position
-    split_text_by_textboxsize(text, font, line_spacing, box_size)
-
-    while words:
-        line = ''
-        while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
-            if(words[0].endswith(".")):
-                line = line + (words.pop(0) + ' ')
-                break
-            line = line + (words.pop(0) + ' ')
-        lines.append(line)
+    lines = split_text_by_textboxsize(text, font, line_spacing, box_size)
 
     for line in lines:
         draw.text((x, y), line, font=font, fill=text_color)
@@ -341,10 +329,11 @@ def make_title_image(image_path, title, sub_title, article_type):
     title_font = ImageFont.truetype(font_path, 64)
     title_box_size = (900, 150)
     sub_box_size = (900, 100)
-    ImageDraw.d
+
     sub_title_font = ImageFont.truetype(font_path, 48)
     try:
-        lines = split_text_by_textboxsize(title, title_font, 20, title_box_size)
+        #lines = split_text_by_textboxsize(title, title_font, 20, title_box_size)
+        pass
     except CustomException.OutOfTextBox as e:
         print(e)
 
