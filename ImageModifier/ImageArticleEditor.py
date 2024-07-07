@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
+import CustomException
 
 prefix_image_path = "../after_processing_image/"
 font_path = "../prefab/Cafe24Ohsquare-v2.0/Cafe24Ohsquare-v2.0.ttf"
@@ -204,7 +205,7 @@ def apply_alpha_gradient_to_image(image_path):
     cv2.imwrite(prefix_image_path + image_name + ".png", result_image)
     return result_image
 
-def add_text_to_image(image_path, text):
+def create_main_content_type1(image_path, text):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -272,7 +273,9 @@ def divide_text_for_one_page(text, font):
     pages.append(lines)
     return pages
 
-def split_text_by_textboxsize(text, font, line_spacing, max_width, max_height):
+# 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
+def split_text_by_textboxsize(text, font, line_spacing, max_size):
+    max_width, max_height = max_size
     words = text.split(' ')
     lines = []
     while words:
@@ -285,7 +288,7 @@ def split_text_by_textboxsize(text, font, line_spacing, max_width, max_height):
         lines.append(line.strip())
         if (font.size + 20) * (len(lines)+1) >= max_height:
             # 글이 길어서 height 벗어나는 경우
-            lines.clear()
+            raise CustomException.OutOfTextBox(font.size)
     return lines
 
 def image_processing(image_path):
@@ -295,12 +298,58 @@ def image_processing(image_path):
     apply_alpha_gradient_to_image(p1_path)
     add_basic_icon_to_image(p1_path, "Information")
 
-def make_content_image(content, image_paths ):
-    pass
-
-def make_title_image(title, sub_title, article_type):
+def make_content_image(content, image_paths):
 
     pass
+
+def add_text_to_image(image_path, text, position, font, box_size, text_color, line_spacing):
+    """
+    이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
+    """
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+
+    # 이미지 로드
+    image = Image.open(image_path).convert('RGBA')
+    draw = ImageDraw.Draw(image)
+
+    # 텍스트 줄바꿈 처리
+    lines = []
+    words = text.split(' ')
+    max_width, max_height = box_size
+    x, y = position
+    split_text_by_textboxsize(text, font, line_spacing, box_size)
+
+    while words:
+        line = ''
+        while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
+            if(words[0].endswith(".")):
+                line = line + (words.pop(0) + ' ')
+                break
+            line = line + (words.pop(0) + ' ')
+        lines.append(line)
+
+    for line in lines:
+        draw.text((x, y), line, font=font, fill=text_color)
+        y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
+
+    result_image = image.convert('RGB')  # RGBA를 RGB로 변환
+    # 결과 저장
+    output_path = prefix_image_path + image_name + ".png"
+    result_image.save(output_path)
+
+def make_title_image(image_path, title, sub_title, article_type):
+    title_font = ImageFont.truetype(font_path, 64)
+    title_box_size = (900, 150)
+    sub_box_size = (900, 100)
+    ImageDraw.d
+    sub_title_font = ImageFont.truetype(font_path, 48)
+    try:
+        lines = split_text_by_textboxsize(title, title_font, 20, title_box_size)
+    except CustomException.OutOfTextBox as e:
+        print(e)
+
+
+
 
 image_processing("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg")
 # 이미지 경로
