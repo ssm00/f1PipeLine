@@ -280,16 +280,23 @@ def split_text_by_textboxsize(text, font, line_spacing, max_size):
     lines = []
     while words:
         line = ''
+        print(words)
         while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
             if words[0].endswith("."):
                 line = line + (words.pop(0) + ' ')
                 break
             line = line + (words.pop(0) + ' ')
         lines.append(line.strip())
+        print(lines)
+        #다음줄은 안되는 경우
+        print((font.size + line_spacing) * (len(lines)+1)>=max_height)
         if (font.size + line_spacing) * (len(lines)+1) >= max_height:
-            # 글이 길어서 height 벗어나는 경우
-            raise CustomException.OutOfTextBox(font.size)
+           print(words)
+           print("이번줄이 안돼")
+           #raise CustomException.OutOfTextBox(font.size)
     return lines
+
+
 
 def image_processing(image_path):
     p1_image = resize_image(image_path)
@@ -314,8 +321,9 @@ def add_text_to_image(image_path, text, position, font, box_size, text_color, li
 
     # 텍스트 줄바꿈 처리
     x, y = position
+    max_width, max_height = box_size
+    draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
     lines = split_text_by_textboxsize(text, font, line_spacing, box_size)
-
     for line in lines:
         draw.text((x, y), line, font=font, fill=text_color)
         y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
@@ -326,13 +334,15 @@ def add_text_to_image(image_path, text, position, font, box_size, text_color, li
     result_image.save(output_path)
 
 def make_title_image(image_path, title, sub_title, article_type):
-    title_font = ImageFont.truetype(font_path, 64)
-    title_box_size = (900, 150)
+    title_box_size = (900, 154)
     sub_box_size = (900, 100)
-
+    title_position = (120, 889)
+    sub_title_position = (120, 1113)
+    title_font = ImageFont.truetype(font_path, 45)
     sub_title_font = ImageFont.truetype(font_path, 48)
+    title_color = (255,255,255)
     try:
-        #lines = split_text_by_textboxsize(title, title_font, 20, title_box_size)
+        add_text_to_image(image_path, title, title_position, title_font, title_box_size, title_color, 20)
         pass
     except CustomException.OutOfTextBox as e:
         print(e)
@@ -346,10 +356,12 @@ image_path = prefix_image_path+'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter
 
 # 이미지 로드
 image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-
 # 텍스트 추가
 text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
+title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발!"
+sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?"
+make_title_image(image_path, title, sub_title,"Information")
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
-add_text_to_image(image_path, text)
+#add_text_to_image(image_path, text)
 
