@@ -6,11 +6,12 @@ import CustomException
 
 prefix_image_path = "../after_processing_image/"
 font_path = "../prefab/Cafe24Ohsquare-v2.0/Cafe24Ohsquare-v2.0.ttf"
-breaking_color = "FB0045"
-information_color = "F38A4A"
-official_color = "c6ff02"
-tech_color = "4AB2F3"
-rumor_color = "f4e04b"
+breaking_color = "#FB0045"
+information_color = "#F38A4A"
+official_color = "#c6ff02"
+tech_color = "#4AB2F3"
+rumor_color = "#f4e04b"
+godic_font = "../prefab/Noto_Sans_KR/static/NotoSansKR-Bold.ttf"
 
 doble_size = (2160,1350)
 
@@ -279,21 +280,15 @@ def split_text_by_textboxsize(text, font, line_spacing, max_size):
     words = text.split(' ')
     lines = []
     while words:
+        if (font.size + line_spacing) * len(lines) > max_height:
+           raise CustomException.OutOfTextBox(font.size)
         line = ''
-        print(words)
         while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
             if words[0].endswith("."):
                 line = line + (words.pop(0) + ' ')
                 break
             line = line + (words.pop(0) + ' ')
         lines.append(line.strip())
-        print(lines)
-        #다음줄은 안되는 경우
-        print((font.size + line_spacing) * (len(lines)+1)>=max_height)
-        if (font.size + line_spacing) * (len(lines)+1) >= max_height:
-           print(words)
-           print("이번줄이 안돼")
-           #raise CustomException.OutOfTextBox(font.size)
     return lines
 
 
@@ -322,7 +317,7 @@ def add_text_to_image(image_path, text, position, font, box_size, text_color, li
     # 텍스트 줄바꿈 처리
     x, y = position
     max_width, max_height = box_size
-    draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
+    #draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
     lines = split_text_by_textboxsize(text, font, line_spacing, box_size)
     for line in lines:
         draw.text((x, y), line, font=font, fill=text_color)
@@ -334,18 +329,29 @@ def add_text_to_image(image_path, text, position, font, box_size, text_color, li
     result_image.save(output_path)
 
 def make_title_image(image_path, title, sub_title, article_type):
-    title_box_size = (900, 154)
-    sub_box_size = (900, 100)
-    title_position = (120, 889)
+    title_box_size = (900, 174)
+    sub_title_box_size = (850, 116)
+    title_position = (120, 870)
     sub_title_position = (120, 1113)
-    title_font = ImageFont.truetype(font_path, 45)
-    sub_title_font = ImageFont.truetype(font_path, 48)
+    title_font_size = 64
+    sub_title_font_size = 48
     title_color = (255,255,255)
-    try:
-        add_text_to_image(image_path, title, title_position, title_font, title_box_size, title_color, 20)
-        pass
-    except CustomException.OutOfTextBox as e:
-        print(e)
+    min_title_font_size = 36
+    min_sub_title_font_size = 28
+    fix_size_value = 3
+    while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
+        try:
+            title_font = ImageFont.truetype(godic_font, title_font_size)
+            sub_title_font = ImageFont.truetype(godic_font, sub_title_font_size)
+            add_text_to_image(image_path, title, title_position, title_font, title_box_size, title_color, 10)
+            add_text_to_image(image_path, sub_title, sub_title_position, sub_title_font, sub_title_box_size, information_color, 7)
+            break
+        except CustomException.OutOfTextBox as e:
+            print(e)
+            title_font_size -= fix_size_value
+            sub_title_font_size -= fix_size_value
+            print("폰트 사이즈 조정")
+
 
 
 
@@ -359,7 +365,7 @@ image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 # 텍스트 추가
 text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
 title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발!"
-sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?"
+sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?"
 make_title_image(image_path, title, sub_title,"Information")
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
