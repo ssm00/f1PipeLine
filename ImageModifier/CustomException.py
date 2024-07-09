@@ -3,5 +3,7 @@ class TooMuchLogin(Exception):
         self.msg = "too much login"
 
 class OutOfTextBox(Exception):
-    def __init__(self, size):
+    def __init__(self, size, type):
         self.size = size
+        if type is not None:
+            self.type = type

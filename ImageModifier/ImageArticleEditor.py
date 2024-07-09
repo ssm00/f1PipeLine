@@ -275,13 +275,13 @@ def divide_text_for_one_page(text, font):
     return pages
 
 # 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
-def split_text_by_textboxsize(text, font, line_spacing, max_size):
+def split_text_by_textboxsize(text, font, line_spacing, max_size, text_type):
     max_width, max_height = max_size
     words = text.split(' ')
     lines = []
     while words:
         if (font.size + line_spacing) * len(lines) > max_height:
-           raise CustomException.OutOfTextBox(font.size)
+           raise CustomException.OutOfTextBox(font.size, text_type)
         line = ''
         while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
             if words[0].endswith("."):
@@ -303,7 +303,7 @@ def make_content_image(content, image_paths):
 
     pass
 
-def add_text_to_image(image, text, position, font, box_size, text_color, line_spacing):
+def add_text_to_image(image, text, position, font, box_size, text_color, line_spacing, text_type=None):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -314,7 +314,7 @@ def add_text_to_image(image, text, position, font, box_size, text_color, line_sp
     x, y = position
     max_width, max_height = box_size
     #draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
-    lines = split_text_by_textboxsize(text, font, line_spacing, box_size)
+    lines = split_text_by_textboxsize(text, font, line_spacing, box_size, text_type)
     for line in lines:
         draw.text((x, y), line, font=font, fill=text_color)
         y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
@@ -328,23 +328,29 @@ def make_title_image(image_path, title, sub_title, article_type):
     sub_title_font_size = 48
     title_color = (255,255,255)
     min_title_font_size = 36
-    min_sub_title_font_size = 28
+    min_sub_title_font_size = 30
     fix_size_value = 3
     while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
         try:
             image = Image.open(image_path).convert('RGBA')
             title_font = ImageFont.truetype(godic_font, title_font_size)
             sub_title_font = ImageFont.truetype(godic_font, sub_title_font_size)
-            add_text_to_image(image, title, title_position, title_font, title_box_size, title_color, 10)
-            add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, information_color, 7)
+            add_text_to_image(image, title, title_position, title_font, title_box_size, title_color, 10, "title")
+            add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, information_color, 7, "sub_title")
             result_image = image.convert('RGB')
             result_image.save(image_path)
             break
         except CustomException.OutOfTextBox as e:
-            print(e)
-            title_font_size -= fix_size_value
-            sub_title_font_size -= fix_size_value
-            print("폰트 사이즈 조정")
+            if e.type == "title":
+                title_font_size -= fix_size_value
+                print(f"{title_font_size} , title 사이즈 조정")
+            elif e.type == "sub_title":
+                sub_title_font_size -= fix_size_value
+                print(f"{sub_title_font_size} , sub title 사이즈 조정")
+    if title_font_size <= min_title_font_size or sub_title_font_size <= min_sub_title_font_size:
+        print("최소 폰트 크기 도달: title_font_size={}, sub_title_font_size={}".format(title_font_size, sub_title_font_size))
+    else:
+        print("타이틀 이미지 저장 성공")
 
 
 image_processing("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg")
@@ -355,8 +361,8 @@ image_path = prefix_image_path+'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter
 image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 # 텍스트 추가
 text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
-title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발!"
-sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?"
+title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜  막스 베르 스타펜 막스 베르 스타펜"
+sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
 make_title_image(image_path, title, sub_title,"Information")
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
