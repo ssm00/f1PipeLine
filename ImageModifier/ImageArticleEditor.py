@@ -292,7 +292,6 @@ def split_text_by_textboxsize(text, font, line_spacing, max_size):
     return lines
 
 
-
 def image_processing(image_path):
     p1_image = resize_image(image_path)
     image_name = os.path.splitext(os.path.basename(image_path))[0]
@@ -308,7 +307,6 @@ def add_text_to_image(image, text, position, font, box_size, text_color, line_sp
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
-
     # 이미지 로드
     draw = ImageDraw.Draw(image)
 
@@ -335,21 +333,18 @@ def make_title_image(image_path, title, sub_title, article_type):
     while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
         try:
             image = Image.open(image_path).convert('RGBA')
-            image_name = os.path.splitext(os.path.basename(image_path))[0]
             title_font = ImageFont.truetype(godic_font, title_font_size)
             sub_title_font = ImageFont.truetype(godic_font, sub_title_font_size)
             add_text_to_image(image, title, title_position, title_font, title_box_size, title_color, 10)
             add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, information_color, 7)
-            
+            result_image = image.convert('RGB')
+            result_image.save(image_path)
             break
         except CustomException.OutOfTextBox as e:
             print(e)
             title_font_size -= fix_size_value
             sub_title_font_size -= fix_size_value
             print("폰트 사이즈 조정")
-
-
-
 
 
 image_processing("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg")
