@@ -304,14 +304,12 @@ def make_content_image(content, image_paths):
 
     pass
 
-def add_text_to_image(image_path, text, position, font, box_size, text_color, line_spacing):
+def add_text_to_image(image, text, position, font, box_size, text_color, line_spacing):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
-    image_name = os.path.splitext(os.path.basename(image_path))[0]
 
     # 이미지 로드
-    image = Image.open(image_path).convert('RGBA')
     draw = ImageDraw.Draw(image)
 
     # 텍스트 줄바꿈 처리
@@ -322,11 +320,6 @@ def add_text_to_image(image_path, text, position, font, box_size, text_color, li
     for line in lines:
         draw.text((x, y), line, font=font, fill=text_color)
         y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
-
-    result_image = image.convert('RGB')  # RGBA를 RGB로 변환
-    # 결과 저장
-    output_path = prefix_image_path + image_name + ".png"
-    result_image.save(output_path)
 
 def make_title_image(image_path, title, sub_title, article_type):
     title_box_size = (900, 174)
@@ -341,10 +334,13 @@ def make_title_image(image_path, title, sub_title, article_type):
     fix_size_value = 3
     while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
         try:
+            image = Image.open(image_path).convert('RGBA')
+            image_name = os.path.splitext(os.path.basename(image_path))[0]
             title_font = ImageFont.truetype(godic_font, title_font_size)
             sub_title_font = ImageFont.truetype(godic_font, sub_title_font_size)
-            add_text_to_image(image_path, title, title_position, title_font, title_box_size, title_color, 10)
-            add_text_to_image(image_path, sub_title, sub_title_position, sub_title_font, sub_title_box_size, information_color, 7)
+            add_text_to_image(image, title, title_position, title_font, title_box_size, title_color, 10)
+            add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, information_color, 7)
+            
             break
         except CustomException.OutOfTextBox as e:
             print(e)
