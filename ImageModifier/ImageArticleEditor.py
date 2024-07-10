@@ -4,7 +4,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 import CustomException
 
-prefix_image_path = "../after_processing_image/"
+prefix_after_processing_path = "../after_processing_image/"
 font_path = "../prefab/Cafe24Ohsquare-v2.0/Cafe24Ohsquare-v2.0.ttf"
 breaking_color = "#FB0045"
 information_color = "#F38A4A"
@@ -79,11 +79,11 @@ def add_basic_icon_to_image(image_path, article_type):
     line_position = (50, 780)  # (x, y)
 
     image_with_icon = add_icon_to_image(image_path, icon_path, icon_position)
-    output_path = prefix_image_path + image_name + ".png"
+    output_path = prefix_after_processing_path + image_name + ".png"
     cv2.imwrite(output_path, image_with_icon)
 
     image_with_line = add_icon_to_image(output_path, line_path, line_position)
-    output_path = prefix_image_path + image_name + ".png"
+    output_path = prefix_after_processing_path + image_name + ".png"
     cv2.imwrite(output_path, image_with_line)
 
 def resize_image(image_path):
@@ -118,7 +118,7 @@ def resize_image(image_path):
         # 세로 전체, 가로는 start_x 부터 start_x + target_width 까지
         # 사진은 0,0 이 우상단임
         resized_cropped_image = resized_image[start_y+100:start_y+target_height+100, :]
-    cv2.imwrite(prefix_image_path + image_name + ".png", resized_cropped_image)
+    cv2.imwrite(prefix_after_processing_path + image_name + ".png", resized_cropped_image)
     return resized_cropped_image
 
 def apply_alpha_gradient_to_image(image_path):
@@ -203,7 +203,7 @@ def apply_alpha_gradient_to_image(image_path):
                         1 - alpha4)
     ).astype(np.uint8)
     # 결과 저장
-    cv2.imwrite(prefix_image_path + image_name + ".png", result_image)
+    cv2.imwrite(prefix_after_processing_path + image_name + ".png", result_image)
     return result_image
 
 def create_main_content_type1(image_path, text):
@@ -248,7 +248,7 @@ def create_main_content_type1(image_path, text):
 
     result_image = image.convert('RGB')  # RGBA를 RGB로 변환
     # 결과 저장
-    output_path = prefix_image_path + image_name + ".png"
+    output_path = prefix_after_processing_path + image_name + ".png"
     result_image.save(output_path)
 
 def divide_text_for_one_page(text, font):
@@ -292,12 +292,12 @@ def split_text_by_textboxsize(text, font, line_spacing, max_size, text_type):
     return lines
 
 
-def image_processing(image_path):
+def resize_alpha_adjust(image_path, article_type):
     p1_image = resize_image(image_path)
     image_name = os.path.splitext(os.path.basename(image_path))[0]
-    p1_path = prefix_image_path+image_name+".png"
+    p1_path = prefix_after_processing_path + image_name + ".png"
     apply_alpha_gradient_to_image(p1_path)
-    add_basic_icon_to_image(p1_path, "Information")
+    add_basic_icon_to_image(p1_path, article_type)
 
 def make_content_image(content, image_paths):
 
@@ -353,9 +353,9 @@ def make_title_image(image_path, title, sub_title, article_type):
         print("타이틀 이미지 저장 성공")
 
 
-image_processing("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg")
+resize_alpha_adjust("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg", "Information")
 # 이미지 경로
-image_path = prefix_image_path+'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
+image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 
 # 이미지 로드
 image = cv2.imread(image_path, cv2.IMREAD_COLOR)
