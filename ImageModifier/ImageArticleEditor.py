@@ -57,7 +57,7 @@ def add_icon_to_image(image_path, icon_path, position):
     return result_image
 
 # article_type은
-# Information, Breaking, Official, Tech, Rumor 다섯가지로
+# Information, Breaking, Official, Tech, Rumor 다섯가지
 def add_basic_icon_to_image(image_path, article_type):
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     if article_type == "Information":
@@ -264,39 +264,32 @@ def add_text_to_image(image, text, position, font, box_size, text_color, line_sp
         y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
 
-def resize_alpha_adjust(image_path, article_type):
+def resize_alpha_adjust(image_path):
     p1_image = resize_image(image_path)
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     p1_path = prefix_after_processing_path + image_name + ".png"
     apply_alpha_gradient_to_image(p1_path)
-    add_basic_icon_to_image(p1_path, article_type)
 
 
-def create_main_content_type1(image_path, text):
+def create_main_content_type1(image_path, text, font, line_spacing):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     position = (120, 870)  # 텍스트를 추가할 위치 (x, y)
-    font_size = 40
     box_size = (900, 370)  # 텍스트 박스 크기 (width, height)
     text_color = (255, 255, 255)  # 흰색
-    line_spacing = 20
     box_color = (255,255,255)
 
     # 이미지 로드
     image = Image.open(image_path).convert('RGBA')
     draw = ImageDraw.Draw(image)
 
-    # 폰트 로드
-    font = ImageFont.truetype(font_path, font_size)
-
     # 텍스트 줄바꿈 처리
     lines = []
     words = text.split(' ')
     max_width, max_height = box_size
     x, y = position
-
 
     #draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
     while words:
@@ -317,7 +310,7 @@ def create_main_content_type1(image_path, text):
     output_path = prefix_after_processing_path + image_name + ".png"
     result_image.save(output_path)
 
-def make_title_image(image_path, title, sub_title, article_type):
+def create_title_image(image_path, title, sub_title, article_type):
     title_box_size = (900, 174)
     sub_title_box_size = (850, 116)
     title_position = (120, 870)
@@ -330,6 +323,7 @@ def make_title_image(image_path, title, sub_title, article_type):
     fix_size_value = 3
     while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
         try:
+            add_basic_icon_to_image(image_path, article_type)
             image = Image.open(image_path).convert('RGBA')
             title_font = ImageFont.truetype(godic_font, title_font_size)
             sub_title_font = ImageFont.truetype(godic_font, sub_title_font_size)
@@ -350,8 +344,15 @@ def make_title_image(image_path, title, sub_title, article_type):
     else:
         print("타이틀 이미지 저장 성공")
 
-def make_content_image(text, image_paths):
-    divide_text_for_one_page(text)
+def create_content_image(text, image_paths):
+    font_size = 40
+    line_spacing = 20
+    font = ImageFont.truetype(font_path, font_size)
+
+    divided_text = divide_text_for_one_page(text, font, line_spacing)
+    for one_page_text in divided_text:
+        #이미지 여러개 나눌 로직 짜기..
+        create_main_content_type1(image_paths[0],one_page_text,font,line_spacing)
     pass
 
 resize_alpha_adjust("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg", "Information")
@@ -364,7 +365,7 @@ image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
 title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜  막스 베르 스타펜 막스 베르 스타펜"
 sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
-make_title_image(image_path, title, sub_title,"Information")
+create_title_image(image_path, title, sub_title, "Information")
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
 #add_text_to_image(image_path, text)
