@@ -276,7 +276,7 @@ def create_main_content_type1(image_path, text, font, line_spacing):
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
     image_name = os.path.splitext(os.path.basename(image_path))[0]
-    position = (120, 870)  # 텍스트를 추가할 위치 (x, y)
+    position = (120, 800)  # 텍스트를 추가할 위치 (x, y)
     box_size = (900, 370)  # 텍스트 박스 크기 (width, height)
     text_color = (255, 255, 255)  # 흰색
     box_color = (255,255,255)
@@ -345,19 +345,37 @@ def create_title_image(image_path, title, sub_title, article_type):
         print("타이틀 이미지 저장 성공")
 
 def create_content_image(text, image_paths):
+
     font_size = 40
     line_spacing = 20
     font = ImageFont.truetype(font_path, font_size)
 
     divided_text = divide_text_for_one_page(text, font, line_spacing)
+    need_page_num = len(divided_text)
+    image_num = len(image_paths)
+    if need_page_num > image_num:
     for one_page_text in divided_text:
         #이미지 여러개 나눌 로직 짜기..
+        resize_alpha_adjust(image_paths[0])
         create_main_content_type1(image_paths[0],one_page_text,font,line_spacing)
     pass
 
-resize_alpha_adjust("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg", "Information")
+def divide_num(page_num, image_num):
+    image_list = []
+
+    page_per_image = page_num // image_num
+    res_image_num = page_num % image_num
+    for i in range(image_num):
+        image_list.append(page_per_image)
+    for i in range(res_image_num):
+        image_list[i] += 1
+    return image_list
+
+
 # 이미지 경로
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
+before_image_path1 = "../download_image/BARCELONA,_SPAIN_-_JUNE_23__Second_placed_Lando_Norris_of_Great_Britain_and_McLaren_smiles_with_his.jpg"
+
 
 # 이미지 로드
 image = cv2.imread(image_path, cv2.IMREAD_COLOR)
@@ -366,6 +384,9 @@ text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실�
 title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜  막스 베르 스타펜 막스 베르 스타펜"
 sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
 create_title_image(image_path, title, sub_title, "Information")
+image_paths = []
+image_paths.append(before_image_path1)
+create_content_image(image_paths, text)
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
 #add_text_to_image(image_path, text)
