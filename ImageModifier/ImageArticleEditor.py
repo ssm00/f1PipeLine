@@ -206,6 +206,72 @@ def apply_alpha_gradient_to_image(image_path):
     cv2.imwrite(prefix_after_processing_path + image_name + ".png", result_image)
     return result_image
 
+
+def divide_text_for_one_page(text, font, line_spacing):
+    """
+        전체 text를 max_width, max_height 기반으로 나누기
+    """
+    lines = []
+    pages = []
+    max_width = 900
+    max_height = 370
+    words = text.split(' ')
+    while words:
+        line = ''
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
+            if words[0].endswith("."):
+                line = line + (words.pop(0) + ' ')
+                break
+            line = line + (words.pop(0) + ' ')
+        lines.append(line.strip())
+        if (font.size + line_spacing) * (len(lines)+1) >= max_height:
+            pages.append(lines.copy())
+            lines.clear()
+    pages.append(lines)
+    return pages
+
+# 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
+def split_text_by_textboxsize(text, font, line_spacing, max_size, text_type):
+    max_width, max_height = max_size
+    words = text.split(' ')
+    lines = []
+    while words:
+        if (font.size + line_spacing) * len(lines) > max_height:
+           raise CustomException.OutOfTextBox(font.size, text_type)
+        line = ''
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
+            if words[0].endswith("."):
+                line = line + (words.pop(0) + ' ')
+                break
+            line = line + (words.pop(0) + ' ')
+        lines.append(line.strip())
+    return lines
+
+def add_text_to_image(image, text, position, font, box_size, text_color, line_spacing, text_type=None):
+    """
+    이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
+    """
+    # 이미지 로드
+    draw = ImageDraw.Draw(image)
+
+    # 텍스트 줄바꿈 처리
+    x, y = position
+    max_width, max_height = box_size
+    #draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
+    lines = split_text_by_textboxsize(text, font, line_spacing, box_size, text_type)
+    for line in lines:
+        draw.text((x, y), line, font=font, fill=text_color)
+        y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
+
+
+def resize_alpha_adjust(image_path, article_type):
+    p1_image = resize_image(image_path)
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+    p1_path = prefix_after_processing_path + image_name + ".png"
+    apply_alpha_gradient_to_image(p1_path)
+    add_basic_icon_to_image(p1_path, article_type)
+
+
 def create_main_content_type1(image_path, text):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
@@ -251,74 +317,6 @@ def create_main_content_type1(image_path, text):
     output_path = prefix_after_processing_path + image_name + ".png"
     result_image.save(output_path)
 
-def divide_text_for_one_page(text, font):
-    """
-        전체 text를 max_width, max_height 기반으로 나누기
-    """
-    lines = []
-    pages = []
-    max_width = 900
-    max_height = 370
-    words = text.split(' ')
-    while words:
-        line = ''
-        while words and font.getlength(line + words[0]) <= max_width and (font.size + 20) * (len(lines)+1) <= max_height:
-            if words[0].endswith("."):
-                line = line + (words.pop(0) + ' ')
-                break
-            line = line + (words.pop(0) + ' ')
-        lines.append(line.strip())
-        if (font.size + 20) * (len(lines)+1) >= max_height:
-            pages.append(lines.copy())
-            lines.clear()
-    pages.append(lines)
-    return pages
-
-# 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
-def split_text_by_textboxsize(text, font, line_spacing, max_size, text_type):
-    max_width, max_height = max_size
-    words = text.split(' ')
-    lines = []
-    while words:
-        if (font.size + line_spacing) * len(lines) > max_height:
-           raise CustomException.OutOfTextBox(font.size, text_type)
-        line = ''
-        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
-            if words[0].endswith("."):
-                line = line + (words.pop(0) + ' ')
-                break
-            line = line + (words.pop(0) + ' ')
-        lines.append(line.strip())
-    return lines
-
-
-def resize_alpha_adjust(image_path, article_type):
-    p1_image = resize_image(image_path)
-    image_name = os.path.splitext(os.path.basename(image_path))[0]
-    p1_path = prefix_after_processing_path + image_name + ".png"
-    apply_alpha_gradient_to_image(p1_path)
-    add_basic_icon_to_image(p1_path, article_type)
-
-def make_content_image(content, image_paths):
-
-    pass
-
-def add_text_to_image(image, text, position, font, box_size, text_color, line_spacing, text_type=None):
-    """
-    이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
-    """
-    # 이미지 로드
-    draw = ImageDraw.Draw(image)
-
-    # 텍스트 줄바꿈 처리
-    x, y = position
-    max_width, max_height = box_size
-    #draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
-    lines = split_text_by_textboxsize(text, font, line_spacing, box_size, text_type)
-    for line in lines:
-        draw.text((x, y), line, font=font, fill=text_color)
-        y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
-
 def make_title_image(image_path, title, sub_title, article_type):
     title_box_size = (900, 174)
     sub_title_box_size = (850, 116)
@@ -352,6 +350,9 @@ def make_title_image(image_path, title, sub_title, article_type):
     else:
         print("타이틀 이미지 저장 성공")
 
+def make_content_image(text, image_paths):
+    divide_text_for_one_page(text)
+    pass
 
 resize_alpha_adjust("../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg", "Information")
 # 이미지 경로
