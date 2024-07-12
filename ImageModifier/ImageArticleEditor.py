@@ -13,10 +13,12 @@ tech_color = "#4AB2F3"
 rumor_color = "#f4e04b"
 godic_font = "../prefab/Noto_Sans_KR/static/NotoSansKR-Bold.ttf"
 
-doble_size = (2160,1350)
+doble_size = (2160, 1350)
+
 
 def add_title_to_image(image_path, icon_path, position):
     pass
+
 
 def add_icon_to_image(image_path, icon_path, position):
     """
@@ -56,6 +58,7 @@ def add_icon_to_image(image_path, icon_path, position):
     result_image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
     return result_image
 
+
 # article_type은
 # Information, Breaking, Official, Tech, Rumor 다섯가지
 def add_basic_icon_to_image(image_path, article_type):
@@ -85,6 +88,7 @@ def add_basic_icon_to_image(image_path, article_type):
     image_with_line = add_icon_to_image(output_path, line_path, line_position)
     output_path = prefix_after_processing_path + image_name + ".png"
     cv2.imwrite(output_path, image_with_line)
+
 
 def resize_image(image_path):
     image_name = os.path.splitext(os.path.basename(image_path))[0]
@@ -117,9 +121,10 @@ def resize_image(image_path):
         start_y = (new_height - target_height) // 2
         # 세로 전체, 가로는 start_x 부터 start_x + target_width 까지
         # 사진은 0,0 이 우상단임
-        resized_cropped_image = resized_image[start_y+100:start_y+target_height+100, :]
+        resized_cropped_image = resized_image[start_y + 100:start_y + target_height + 100, :]
     cv2.imwrite(prefix_after_processing_path + image_name + ".png", resized_cropped_image)
     return resized_cropped_image
+
 
 def apply_alpha_gradient_to_image(image_path):
     """
@@ -187,7 +192,7 @@ def apply_alpha_gradient_to_image(image_path):
     result_image[second_start_height:second_end_height] = (
             image[second_start_height:second_end_height] * alpha2 + black_background[
                                                                     second_start_height:second_end_height] * (
-                        1 - alpha2)
+                    1 - alpha2)
     ).astype(np.uint8)
 
     # 원본 이미지의 세 번째 하단 부분을 알파 블렌딩
@@ -200,7 +205,7 @@ def apply_alpha_gradient_to_image(image_path):
     result_image[fourth_start_height:fourth_end_height] = (
             image[fourth_start_height:fourth_end_height] * alpha4 + black_background[
                                                                     fourth_start_height:fourth_end_height] * (
-                        1 - alpha4)
+                    1 - alpha4)
     ).astype(np.uint8)
     # 결과 저장
     cv2.imwrite(prefix_after_processing_path + image_name + ".png", result_image)
@@ -218,17 +223,19 @@ def divide_text_for_one_page(text, font, line_spacing):
     words = text.split(' ')
     while words:
         line = ''
-        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (
+                len(lines) + 1) <= max_height:
             if words[0].endswith("."):
                 line = line + (words.pop(0) + ' ')
                 break
             line = line + (words.pop(0) + ' ')
         lines.append(line.strip())
-        if (font.size + line_spacing) * (len(lines)+1) >= max_height:
+        if (font.size + line_spacing) * (len(lines) + 1) >= max_height:
             pages.append(lines.copy())
             lines.clear()
     pages.append(lines)
     return pages
+
 
 # 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
 def split_text_by_textboxsize(text, font, line_spacing, max_size, text_type):
@@ -237,15 +244,17 @@ def split_text_by_textboxsize(text, font, line_spacing, max_size, text_type):
     lines = []
     while words:
         if (font.size + line_spacing) * len(lines) > max_height:
-           raise CustomException.OutOfTextBox(font.size, text_type)
+            raise CustomException.OutOfTextBox(font.size, text_type)
         line = ''
-        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines)+1) <= max_height:
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (
+                len(lines) + 1) <= max_height:
             if words[0].endswith("."):
                 line = line + (words.pop(0) + ' ')
                 break
             line = line + (words.pop(0) + ' ')
         lines.append(line.strip())
     return lines
+
 
 def add_text_to_image(image, text, position, font, box_size, text_color, line_spacing, text_type=None):
     """
@@ -257,7 +266,7 @@ def add_text_to_image(image, text, position, font, box_size, text_color, line_sp
     # 텍스트 줄바꿈 처리
     x, y = position
     max_width, max_height = box_size
-    #draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
+    # draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
     lines = split_text_by_textboxsize(text, font, line_spacing, box_size, text_type)
     for line in lines:
         draw.text((x, y), line, font=font, fill=text_color)
@@ -279,7 +288,7 @@ def create_main_content_type1(image_path, text, font, line_spacing):
     position = (120, 800)  # 텍스트를 추가할 위치 (x, y)
     box_size = (900, 370)  # 텍스트 박스 크기 (width, height)
     text_color = (255, 255, 255)  # 흰색
-    box_color = (255,255,255)
+    box_color = (255, 255, 255)
 
     # 이미지 로드
     image = Image.open(image_path).convert('RGBA')
@@ -291,11 +300,11 @@ def create_main_content_type1(image_path, text, font, line_spacing):
     max_width, max_height = box_size
     x, y = position
 
-    #draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
+    # draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
     while words:
         line = ''
         while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
-            if(words[0].endswith(".")):
+            if (words[0].endswith(".")):
                 line = line + (words.pop(0) + ' ')
                 break
             line = line + (words.pop(0) + ' ')
@@ -310,6 +319,7 @@ def create_main_content_type1(image_path, text, font, line_spacing):
     output_path = prefix_after_processing_path + image_name + ".png"
     result_image.save(output_path)
 
+
 def create_title_image(image_path, title, sub_title, article_type):
     title_box_size = (900, 174)
     sub_title_box_size = (850, 116)
@@ -317,7 +327,7 @@ def create_title_image(image_path, title, sub_title, article_type):
     sub_title_position = (120, 1113)
     title_font_size = 64
     sub_title_font_size = 48
-    title_color = (255,255,255)
+    title_color = (255, 255, 255)
     min_title_font_size = 36
     min_sub_title_font_size = 30
     fix_size_value = 3
@@ -328,7 +338,8 @@ def create_title_image(image_path, title, sub_title, article_type):
             title_font = ImageFont.truetype(godic_font, title_font_size)
             sub_title_font = ImageFont.truetype(godic_font, sub_title_font_size)
             add_text_to_image(image, title, title_position, title_font, title_box_size, title_color, 10, "title")
-            add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, information_color, 7, "sub_title")
+            add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size,
+                              information_color, 7, "sub_title")
             result_image = image.convert('RGB')
             result_image.save(image_path)
             break
@@ -344,8 +355,8 @@ def create_title_image(image_path, title, sub_title, article_type):
     else:
         print("타이틀 이미지 저장 성공")
 
-def create_content_image(text, image_paths):
 
+def create_content_image(text, image_paths):
     font_size = 40
     line_spacing = 20
     font = ImageFont.truetype(font_path, font_size)
@@ -354,40 +365,46 @@ def create_content_image(text, image_paths):
     need_page_num = len(divided_text)
     image_num = len(image_paths)
     if need_page_num > image_num:
+        pass
     for one_page_text in divided_text:
-        #이미지 여러개 나눌 로직 짜기..
+        # 이미지 여러개 나눌 로직 짜기..
         resize_alpha_adjust(image_paths[0])
-        create_main_content_type1(image_paths[0],one_page_text,font,line_spacing)
+        create_main_content_type1(image_paths[0], one_page_text, font, line_spacing)
     pass
+
 
 def divide_num(page_num, image_num):
     image_list = []
-
-    page_per_image = page_num // image_num
-    res_image_num = page_num % image_num
-    for i in range(image_num):
-        image_list.append(page_per_image)
-    for i in range(res_image_num):
-        image_list[i] += 1
+    if page_num >= image_num:
+        page_per_image = page_num // image_num
+        res_image_num = page_num % image_num
+        for i in range(image_num):
+            image_list.append(page_per_image)
+        for i in range(res_image_num):
+            image_list[i] += 1
+    else:
+        for i in range(page_num):
+            image_list.append(1)
     return image_list
 
 
-# 이미지 경로
-image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
-before_image_path1 = "../download_image/BARCELONA,_SPAIN_-_JUNE_23__Second_placed_Lando_Norris_of_Great_Britain_and_McLaren_smiles_with_his.jpg"
-
-
-# 이미지 로드
-image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-# 텍스트 추가
-text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
-title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜  막스 베르 스타펜 막스 베르 스타펜"
-sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
-create_title_image(image_path, title, sub_title, "Information")
-image_paths = []
-image_paths.append(before_image_path1)
-create_content_image(image_paths, text)
+# # 이미지 경로
+# image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
+# before_image_path1 = "../download_image/BARCELONA,_SPAIN_-_JUNE_23__Second_placed_Lando_Norris_of_Great_Britain_and_McLaren_smiles_with_his.jpg"
+#
+#
+# # 이미지 로드
+# image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+# # 텍스트 추가
+# text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
+# title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜  막스 베르 스타펜 막스 베르 스타펜"
+# sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
+# create_title_image(image_path, title, sub_title, "Information")
+# image_paths = []
+# image_paths.append(before_image_path1)
+# create_content_image(image_paths, text)
 
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
-#add_text_to_image(image_path, text)
+# add_text_to_image(image_path, text)
 
+print(divide_num(2, 10))
