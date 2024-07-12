@@ -375,16 +375,12 @@ def create_content_image(text, image_paths):
 
 def divide_num(page_num, image_num):
     image_list = []
-    if page_num >= image_num:
-        page_per_image = page_num // image_num
-        res_image_num = page_num % image_num
-        for i in range(image_num):
-            image_list.append(page_per_image)
-        for i in range(res_image_num):
-            image_list[i] += 1
-    else:
-        for i in range(page_num):
-            image_list.append(1)
+    page_per_image = page_num // image_num
+    res_image_num = page_num % image_num
+    for i in range(image_num):
+        image_list.append(page_per_image)
+    for i in range(res_image_num):
+        image_list[i] += 1
     return image_list
 
 
@@ -407,4 +403,4 @@ def divide_num(page_num, image_num):
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
 # add_text_to_image(image_path, text)
 
-print(divide_num(2, 10))
+print(divide_num(1, 3))
