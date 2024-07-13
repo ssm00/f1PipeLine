@@ -319,7 +319,6 @@ def create_main_content_type1(image_path, text, font, line_spacing):
     output_path = prefix_after_processing_path + image_name + ".png"
     result_image.save(output_path)
 
-
 def create_title_image(image_path, title, sub_title, article_type):
     title_box_size = (900, 174)
     sub_title_box_size = (850, 116)
@@ -356,32 +355,35 @@ def create_title_image(image_path, title, sub_title, article_type):
         print("타이틀 이미지 저장 성공")
 
 
-def create_content_image(text, image_paths):
+def select_image_index(need_page_count, image_count):
+    """
+    페이지 갯수와 이미지 갯수가 맞지 않는 경우 페이지별로 사용할 이미지 정하기
+    페이지 갯수를 이미지 갯수로 나눈 몫만큼 나눈뒤 남은 페이지만큼 앞번호부터 이미지 중복 사용
+    Examples image3개 page 5개인 경우
+    Returns [0,0,1,1,2] 설명 : 1페이지 0번 이미지 2페이지 0번 이미지 3페이지 1번 이미지
+
+    """
+    select_image_index_list = []
+    page_per_image = need_page_count // image_count
+    res_image_count = need_page_count % image_count
+    for i in range(image_count):
+        count = page_per_image + (1 if i < res_image_count else 0)
+        select_image_index_list.extend([i] * count)
+    return select_image_index_list
+
+def create_content_image(text, image_path_list):
     font_size = 40
     line_spacing = 20
     font = ImageFont.truetype(font_path, font_size)
 
     divided_text = divide_text_for_one_page(text, font, line_spacing)
-    need_page_num = len(divided_text)
-    image_num = len(image_paths)
-    if need_page_num > image_num:
-        pass
-    for one_page_text in divided_text:
+    need_page_count = len(divided_text)
+    image_count = len(image_path_list)
+    select_image_index_list = select_image_index(need_page_count, image_count)
+    for index, text_for_one_page in enumerate(divided_text):
         # 이미지 여러개 나눌 로직 짜기..
-        resize_alpha_adjust(image_paths[0])
-        create_main_content_type1(image_paths[0], one_page_text, font, line_spacing)
-    pass
-
-
-def divide_num(page_num, image_num):
-    image_list = []
-    page_per_image = page_num // image_num
-    res_image_num = page_num % image_num
-    for i in range(image_num):
-        image_list.append(page_per_image)
-    for i in range(res_image_num):
-        image_list[i] += 1
-    return image_list
+        image_index = select_image_index_list[index]
+        create_main_content_type1(image_path_list[image_index], text_for_one_page, font, line_spacing)
 
 
 # # 이미지 경로
@@ -403,4 +405,3 @@ def divide_num(page_num, image_num):
 # 텍스트 박스와 텍스트가 추가된 이미지 생성
 # add_text_to_image(image_path, text)
 
-print(divide_num(1, 3))
