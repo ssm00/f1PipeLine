@@ -7,3 +7,4 @@ account_info.json
 __pycache__/
 *.png
 SeleniumBase/
+ArticleCrawler/test.py
