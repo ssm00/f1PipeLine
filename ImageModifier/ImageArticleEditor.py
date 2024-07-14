@@ -12,6 +12,8 @@ official_color = "#c6ff02"
 tech_color = "#4AB2F3"
 rumor_color = "#f4e04b"
 godic_font = "../prefab/Noto_Sans_KR/static/NotoSansKR-Bold.ttf"
+main_content_line_spacing = 15
+main_content_font_size = 40
 
 type2_size = (2160, 1350)
 
@@ -395,7 +397,7 @@ def resize_alpha_adjust_type1(image_path):
 #     apply_alpha_gradient_to_image(p1_path)
 
 
-def create_main_content_type1(image_path, text, font, line_spacing, article_type):
+def create_main_content_type1(image_path, lines, font, line_spacing, article_type, index):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -423,20 +425,20 @@ def create_main_content_type1(image_path, text, font, line_spacing, article_type
     image = add_icon_to_image(image, line_path, line_position)
 
     # 텍스트 줄바꿈 처리
-    lines = []
-    words = text.split(' ')
+    # lines = []
+    # words = text.split(' ')
     max_width, max_height = box_size
     x, y = position
 
     # draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
-    while words:
-        line = ''
-        while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
-            if (words[0].endswith(".")):
-                line = line + (words.pop(0) + ' ')
-                break
-            line = line + (words.pop(0) + ' ')
-        lines.append(line)
+    # while words:
+    #     line = ''
+    #     while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
+    #         if (words[0].endswith(".")):
+    #             line = line + (words.pop(0) + ' ')
+    #             break
+    #         line = line + (words.pop(0) + ' ')
+    #     lines.append(line)
 
     for line in lines:
         draw.text((x, y), line, font=font, fill=text_color)
@@ -444,7 +446,7 @@ def create_main_content_type1(image_path, text, font, line_spacing, article_type
 
     result_image = image.convert('RGB')  # RGBA를 RGB로 변환
     # 결과 저장
-    output_path = prefix_after_processing_path + image_name + ".png"
+    output_path = prefix_after_processing_path + image_name + "_index_" + str(index) + ".png"
     result_image.save(output_path)
 
 def create_main_content_type2(image_path, text, font, line_spacing):
@@ -538,18 +540,16 @@ def select_image_index(need_page_count, image_count):
         select_image_index_list.extend([i] * count)
     return select_image_index_list
 
-def create_content_image(text, image_path_list):
-    font_size = 40
-    line_spacing = 20
-    font = ImageFont.truetype(font_path, font_size)
+def create_content_image(text, image_path_list, article_type):
+    font = ImageFont.truetype(font_path, main_content_font_size)
 
-    divided_text = divide_text_for_one_page(text, font, line_spacing)
-    need_page_count = len(divided_text)
+    divided_text_list = divide_text_for_one_page(text, font, main_content_line_spacing)
+    need_page_count = len(divided_text_list)
     image_count = len(image_path_list)
     select_image_index_list = select_image_index(need_page_count, image_count)
-    for index, text_for_one_page in enumerate(divided_text):
+    for index, lines_for_one_page in enumerate(divided_text_list):
         image_index = select_image_index_list[index]
-        create_main_content_type1(image_path_list[image_index], text_for_one_page, font, line_spacing)
+        create_main_content_type1(image_path_list[image_index], lines_for_one_page, font, main_content_line_spacing, article_type, index)
 
 
 # 이미지 경로
@@ -557,12 +557,11 @@ image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
 
 resize_alpha_adjust_type1(before_image_path1)
-font_size = 40
-line_spacing = 15
-font = ImageFont.truetype(font_path, font_size)
 text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
-create_main_content_type1(image_path, text, font, line_spacing, "Information")
+img_list = []
+img_list.append(image_path)
 
+create_content_image(text,img_list, "Information")
 # title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발!"
 # sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
 # create_title_image(image_path, title, sub_title, "Information")
