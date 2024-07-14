@@ -13,14 +13,79 @@ tech_color = "#4AB2F3"
 rumor_color = "#f4e04b"
 godic_font = "../prefab/Noto_Sans_KR/static/NotoSansKR-Bold.ttf"
 
-doble_size = (2160, 1350)
+type2_size = (2160, 1350)
 
 
-def add_title_to_image(image_path, icon_path, position):
-    pass
+# def add_icon_to_image(image_path, icon_path, position):
+#     """
+#     이미지에 아이콘을 추가
+#
+#     Parameters:
+#     - image_path: 기본 이미지 경로
+#     - icon_path: 추가할 아이콘 이미지 경로
+#     - position: 아이콘을 추가할 위치 (x, y)
+#
+#     Returns:
+#     - 아이콘이 추가된 이미지
+#     """
+#     # 기본 이미지 로드 (OpenCV 사용)
+#     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+#     if image is None:
+#         raise FileNotFoundError(f"Image at path '{image_path}' not found.")
+#
+#     # 아이콘 이미지 로드 (Pillow 사용)
+#     icon = Image.open(icon_path)
+#     if icon is None:
+#         raise FileNotFoundError(f"Icon at path '{icon_path}' not found.")
+#
+#     # 기본 이미지를 Pillow 이미지로 변환
+#     image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+#
+#     # 아이콘 이미지의 크기 얻기
+#     icon_width, icon_height = icon.size
+#
+#     # 아이콘을 추가할 위치 (x, y) 설정
+#     x, y = position
+#
+#     # 아이콘을 기본 이미지에 붙여넣기
+#     image_pil.paste(icon, (x, y), icon.convert('RGBA'))
+#
+#     # 결과 이미지를 다시 OpenCV 이미지로 변환
+#     result_image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
+#     return result_image
+#
+#
+# # article_type은
+# # Information, Breaking, Official, Tech, Rumor 다섯가지
+# def add_title_icon_to_image(image_path, article_type):
+#     image_name = os.path.splitext(os.path.basename(image_path))[0]
+#     if article_type == "Information":
+#         icon_path = '../prefab/information_icon.png'
+#         line_path = '../prefab/information_line_440.png'
+#     elif article_type == "Breaking":
+#         icon_path = '../prefab/breaking_icon.png'
+#         line_path = '../prefab/breaking_line_440.png'
+#     elif article_type == "Official":
+#         icon_path = '../prefab/official_icon.png'
+#         line_path = '../prefab/official_line_440.png'
+#     elif article_type == "Tech":
+#         icon_path = '../prefab/tech_icon.png'
+#         line_path = '../prefab/tech_line_440.png'
+#     elif article_type == "Rumor":
+#         icon_path = '../prefab/rumor_icon.png'
+#         line_path = '../prefab/rumor_line_440.png'
+#     icon_position = (50, 700)  # (x, y)
+#     line_position = (50, 780)  # (x, y)
+#
+#     image_with_icon = add_icon_to_image(image_path, icon_path, icon_position)
+#     output_path = prefix_after_processing_path + image_name + ".png"
+#     cv2.imwrite(output_path, image_with_icon)
+#
+#     image_with_line = add_icon_to_image(output_path, line_path, line_position)
+#     output_path = prefix_after_processing_path + image_name + ".png"
+#     cv2.imwrite(output_path, image_with_line)
 
-
-def add_icon_to_image(image_path, icon_path, position):
+def add_icon_to_image(image, icon_path, position):
     """
     이미지에 아이콘을 추가
 
@@ -32,35 +97,16 @@ def add_icon_to_image(image_path, icon_path, position):
     Returns:
     - 아이콘이 추가된 이미지
     """
-    # 기본 이미지 로드 (OpenCV 사용)
-    image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    if image is None:
-        raise FileNotFoundError(f"Image at path '{image_path}' not found.")
 
-    # 아이콘 이미지 로드 (Pillow 사용)
-    icon = Image.open(icon_path)
+    # 아이콘 이미지 로드
+    icon = Image.open(icon_path).convert("RGBA")
     if icon is None:
         raise FileNotFoundError(f"Icon at path '{icon_path}' not found.")
-
-    # 기본 이미지를 Pillow 이미지로 변환
-    image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-
-    # 아이콘 이미지의 크기 얻기
     icon_width, icon_height = icon.size
+    image.paste(icon, position, icon)
+    return image
 
-    # 아이콘을 추가할 위치 (x, y) 설정
-    x, y = position
-
-    # 아이콘을 기본 이미지에 붙여넣기
-    image_pil.paste(icon, (x, y), icon.convert('RGBA'))
-
-    # 결과 이미지를 다시 OpenCV 이미지로 변환
-    result_image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
-    return result_image
-
-
-# article_type은
-# Information, Breaking, Official, Tech, Rumor 다섯가지
+# article_type은 Information, Breaking, Official, Tech, Rumor 다섯가지
 def add_title_icon_to_image(image_path, article_type):
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     if article_type == "Information":
@@ -78,16 +124,17 @@ def add_title_icon_to_image(image_path, article_type):
     elif article_type == "Rumor":
         icon_path = '../prefab/rumor_icon.png'
         line_path = '../prefab/rumor_line_440.png'
+
     icon_position = (50, 700)  # (x, y)
     line_position = (50, 780)  # (x, y)
-
-    image_with_icon = add_icon_to_image(image_path, icon_path, icon_position)
-    output_path = prefix_after_processing_path + image_name + ".png"
-    cv2.imwrite(output_path, image_with_icon)
-
-    image_with_line = add_icon_to_image(output_path, line_path, line_position)
-    output_path = prefix_after_processing_path + image_name + ".png"
-    cv2.imwrite(output_path, image_with_line)
+    # 기본 이미지 로드
+    image = Image.open(image_path).convert("RGBA")
+    # 기본 이미지에 아이콘 추가
+    image_with_icon = add_icon_to_image(image, icon_path, icon_position)
+    image_with_line = add_icon_to_image(image_with_icon, line_path, line_position)
+    # 최종 결과 저장
+    output_path = os.path.join(prefix_after_processing_path, image_name + ".png")
+    image_with_line.save(output_path, "PNG")
 
 def resize_image_type1(image_path):
     """
@@ -348,12 +395,12 @@ def resize_alpha_adjust_type1(image_path):
 #     apply_alpha_gradient_to_image(p1_path)
 
 
-def create_main_content_type1(image_path, text, font, line_spacing):
+def create_main_content_type1(image_path, text, font, line_spacing, article_type):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
     image_name = os.path.splitext(os.path.basename(image_path))[0]
-    position = (120, 800)  # 텍스트를 추가할 위치 (x, y)
+    position = (120, 810)  # 텍스트를 추가할 위치 (x, y)
     box_size = (900, 370)  # 텍스트 박스 크기 (width, height)
     text_color = (255, 255, 255)  # 흰색
     box_color = (255, 255, 255)
@@ -361,6 +408,19 @@ def create_main_content_type1(image_path, text, font, line_spacing):
     # 이미지 로드
     image = Image.open(image_path).convert('RGBA')
     draw = ImageDraw.Draw(image)
+
+    if article_type == "Information":
+        line_path = '../prefab/information_line_440.png'
+    elif article_type == "Breaking":
+        line_path = '../prefab/breaking_line_440.png'
+    elif article_type == "Official":
+        line_path = '../prefab/official_line_440.png'
+    elif article_type == "Tech":
+        line_path = '../prefab/tech_line_440.png'
+    elif article_type == "Rumor":
+        line_path = '../prefab/rumor_line_440.png'
+    line_position = (50, 780)  # (x, y)
+    image = add_icon_to_image(image, line_path, line_position)
 
     # 텍스트 줄바꿈 처리
     lines = []
@@ -390,7 +450,7 @@ def create_main_content_type1(image_path, text, font, line_spacing):
 def create_main_content_type2(image_path, text, font, line_spacing):
     """
         이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
-        """
+    """
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     position = (120, 800)  # 텍스트를 추가할 위치 (x, y)
     box_size = (900, 370)  # 텍스트 박스 크기 (width, height)
@@ -438,9 +498,9 @@ def create_title_image(image_path, title, sub_title, article_type):
     min_title_font_size = 36
     min_sub_title_font_size = 30
     fix_size_value = 3
+    add_title_icon_to_image(image_path, article_type)
     while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
         try:
-            add_title_icon_to_image(image_path, article_type)
             image = Image.open(image_path).convert('RGBA')
             title_font = ImageFont.truetype(godic_font, title_font_size)
             sub_title_font = ImageFont.truetype(godic_font, sub_title_font_size)
@@ -469,7 +529,6 @@ def select_image_index(need_page_count, image_count):
     페이지 갯수를 이미지 갯수로 나눈 몫만큼 나눈뒤 남은 페이지만큼 앞번호부터 이미지 중복 사용
     Examples image3개 page 5개인 경우
     Returns [0,0,1,1,2] 설명 : 1페이지 0번 이미지 2페이지 0번 이미지 3페이지 1번 이미지
-
     """
     select_image_index_list = []
     page_per_image = need_page_count // image_count
@@ -498,14 +557,19 @@ image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
 
 resize_alpha_adjust_type1(before_image_path1)
+font_size = 40
+line_spacing = 15
+font = ImageFont.truetype(font_path, font_size)
+text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
+create_main_content_type1(image_path, text, font, line_spacing, "Information")
+
+# title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발!"
+# sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
+# create_title_image(image_path, title, sub_title, "Information")
 
 # 이미지 로드
 # image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 # # 텍스트 추가
-# text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
-# title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜  막스 베르 스타펜 막스 베르 스타펜"
-# sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
-# create_title_image(image_path, title, sub_title, "Information")
 # image_paths = []
 # image_paths.append(before_image_path1)
 # create_content_image(image_paths, text)
