@@ -131,7 +131,7 @@ class F1PageCrawler:
     def img_download(self, img_source, img_name, save_path):
         response = re.get(img_source)
         if response.status_code == 200:
-            file_name = f"{save_path}/{img_name}.jpg"
+            file_name = f"{save_path}/{img_name}.png"
             print(file_name)
             with open(file_name, 'wb') as file:
                 file.write(response.content)

@@ -384,6 +384,68 @@ def apply_alpha_gradient_to_image_type1(image_path):
     result_image.save(output_path)
     return result_image
 
+def apply_alpha_gradient_to_image_type2(image_path, image_id):
+    """
+    이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
+
+    Parameters:
+    - image: 처리할 21600x1350 이미지
+
+    Returns:
+    - 그라데이션 처리가 된 2160x1350 이미지
+    """
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+    image = Image.open(image_path).convert("RGB")
+
+    w, h = image.size
+    assert h == 1350 and w == 2160, "입력 이미지 크기는 1080x1350이어야 합니다."
+
+    # 구간 설정
+    first_start_width = 0
+    first_end_width = 340
+    second_start_width = 340
+    second_end_width = 390
+    third_start_width = 440
+    third_end_width = 490
+    fourth_start_width = 540
+    fourth_end_width = 590
+
+    first_gradient_width = first_end_width - first_start_width
+    second_gradient_width = second_end_width - second_start_width
+    third_gradient_width = third_end_width - third_start_width
+    fourth_gradient_width = fourth_end_width - fourth_start_width
+
+    # 알파 값 생성
+    def create_alpha_array(start, end, width, height):
+        alpha = np.linspace(start, end, width).reshape(-1, 1)
+        alpha = np.repeat(alpha, height, axis=0)
+        return alpha
+
+    alpha1 = create_alpha_array(1, 0.3, first_gradient_width, h)
+    alpha2 = create_alpha_array(0.3, 0.2, second_gradient_width, h)
+    alpha3 = create_alpha_array(0.2, 0.1, third_gradient_width, h)
+    alpha4 = create_alpha_array(0.1, 0, fourth_gradient_width, h)
+
+    black_background = Image.new("RGB", (w, h), (0, 0, 0))
+
+    result_image = image.copy()
+
+    def blend_image_section(image, alpha, start_width, end_width):
+        section = image.crop((start_width, 0, end_width, h))
+        black_section = black_background.crop((start_width, 0, end_width, h))
+        alpha_img = Image.fromarray((alpha * 255).astype(np.uint8), mode='L')
+        blended_section = Image.composite(section, black_section, alpha_img)
+        image.paste(blended_section, (start_width, 0))
+
+    blend_image_section(result_image, alpha1, first_start_width, first_end_width)
+    blend_image_section(result_image, alpha2, second_start_width, second_end_width)
+    blend_image_section(result_image, alpha3, third_start_width, third_end_width)
+    blend_image_section(result_image, alpha4, fourth_start_width, fourth_end_width)
+
+    output_path = os.path.join(prefix_after_processing_path, image_name + ".png")
+    result_image.save(output_path)
+    return result_image
+
 def divide_text_for_one_page(text, font, line_spacing):
     """
         전체 text를 max_width, max_height 기반으로 나누기
@@ -451,12 +513,11 @@ def resize_alpha_adjust_type1(image_path):
     processing1_path = prefix_after_processing_path + image_name + ".png"
     apply_alpha_gradient_to_image_type1(processing1_path)
 
-# def resize_alpha_adjust_type2(image_path):
-#     p1_image = resize_image_type1(image_path)
-#     image_name = os.path.splitext(os.path.basename(image_path))[0]
-#     p1_path = prefix_after_processing_path + image_name + ".png"
-#     apply_alpha_gradient_to_image(p1_path)
-
+def resize_alpha_adjust_type2(image_path, image_id):
+    processing1_image = resize_image_type2(image_path, image_id)
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+    processing1_path = prefix_after_processing_path + image_name + ".png"
+    apply_alpha_gradient_to_image_type2(processing1_path)
 
 def create_main_content_type1(image_path, lines, font, line_spacing, article_type, index):
     """
