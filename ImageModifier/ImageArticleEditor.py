@@ -207,14 +207,35 @@ def resize_image_type1(image_path, image_id):
     return resized_cropped_image
 
 
-def resize_image_type2(image_path):
+def resize_image_type2(image_path, image_id):
     """
-        가로로 긴 사진 생성 사진이 새로 형식 사진이라면 이미지 비율이 너무 안맞아서 불가능 그냥 return 하기\
+        가로로 긴 사진 생성 사진이 새로 형식 사진이라면 이미지 비율이 너무 안맞아서 불가능 그냥 return 하기
         2160, 1350 resize
     """
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+    image = Image.open(image_path)
+    w, h = image.size
+    target_size = (2160, 1350)
+    target_height = target_size[1]
+    target_width = target_size[0]
+    proportion_h = target_size[1] / h
+    proportion_w = target_size[0] / w
 
+    # 가로가 긴 사진인 경우
+    if w > h:
+        new_height = target_height
+        new_width = int(proportion_h * w)
+        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        start_x = (new_width - target_width) // 2
+        resized_cropped_image = resized_image.crop((start_x, 0, start_x + target_width, new_height))
+    # 세로가 긴 사진인 경우
+    else:
+        raise CustomException.SizeNotFitType2(image.size)
 
-
+    save_path = os.path.join(prefix_after_processing_path, str(image_id))
+    os.makedirs(save_path, exist_ok=True)
+    resized_cropped_image.save(os.path.join(save_path, image_name + ".png"))
+    return resized_cropped_image
 
 # def apply_alpha_gradient_to_image(image_path):
 #     """
@@ -596,12 +617,14 @@ def create_content_image(text, image_path_list, article_type):
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
 
-resize_alpha_adjust_type1(before_image_path1)
-text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
-img_list = []
-img_list.append(image_path)
+resize_image_type2(before_image_path1, "12321321")
 
-create_content_image(text,img_list, "Information")
+# resize_alpha_adjust_type1(before_image_path1)
+# text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
+# img_list = []
+# img_list.append(image_path)
+#
+# create_content_image(text,img_list, "Information")
 # title = "막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발! 막스 베르스타펜, 모나코 그랑프리 예선에서 6위로 출발!"
 # sub_title = "베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! 그 이유는?, 베르스타펜, 모나코에서 충돌! ?"
 # create_title_image(image_path, title, sub_title, "Information")
