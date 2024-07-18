@@ -396,7 +396,6 @@ def apply_alpha_gradient_to_image_type2(image_path):
     Returns:
     - 그라데이션 처리가 된 2160x1350 이미지
     """
-    image_name = os.path.splitext(os.path.basename(image_path))[0]
     image = Image.open(image_path).convert("RGB")
 
     w, h = image.size
@@ -404,20 +403,11 @@ def apply_alpha_gradient_to_image_type2(image_path):
 
     # 구간 설정
     # 왼쪽
-    first_start_width = 0
-    first_end_width = 440
-    second_start_width = 440
-    second_end_width = 490
-    third_start_width = 490
-    third_end_width = 540
-    fourth_start_width = 540
-    fourth_end_width = 590
-
-    # first_start_width = 0
-    # first_end_width = 440
-    # second_end_width = 490
-    # third_end_width = 540
-    # fourth_end_width = 590
+    left_first_start_width = 0
+    left_first_end_width = 440
+    left_second_end_width = 490
+    left_third_end_width = 540
+    left_fourth_end_width = 590
 
     #오른쪽
     right_first_start_width = 1570
@@ -426,10 +416,10 @@ def apply_alpha_gradient_to_image_type2(image_path):
     right_third_end_width = 1720
     right_fourth_end_width = 2160
 
-    first_gradient_width = first_end_width - first_start_width
-    second_gradient_width = second_end_width - second_start_width
-    third_gradient_width = third_end_width - third_start_width
-    fourth_gradient_width = fourth_end_width - fourth_start_width
+    left_first_gradient_width = left_first_end_width - left_first_start_width
+    left_second_gradient_width = left_second_end_width - left_first_end_width
+    left_third_gradient_width = left_third_end_width - left_second_end_width
+    left_fourth_gradient_width = left_fourth_end_width - left_third_end_width
 
     right_first_gradient_width = right_first_end_width - right_first_start_width
     right_second_gradient_width = right_second_end_width - right_first_end_width
@@ -443,10 +433,10 @@ def apply_alpha_gradient_to_image_type2(image_path):
 
     #검정색 배경과 블렌딩할 알파배열 0인 투명인 상태가 블랜딩 될 시 배경은 검정 붙투명과 합쳐짐
     #왼쪽
-    left_alpha1 = create_alpha_array(0, 0.4, first_gradient_width, h)
-    left_alpha2 = create_alpha_array(0.4, 0.6, second_gradient_width, h)
-    left_alpha3 = create_alpha_array(0.6, 0.8, third_gradient_width, h)
-    left_alpha4 = create_alpha_array(0.8, 1, fourth_gradient_width, h)
+    left_alpha1 = create_alpha_array(0, 0.7, left_first_gradient_width, h)
+    left_alpha2 = create_alpha_array(0.7, 0.8, left_second_gradient_width, h)
+    left_alpha3 = create_alpha_array(0.8, 0.9, left_third_gradient_width, h)
+    left_alpha4 = create_alpha_array(0.9, 1, left_fourth_gradient_width, h)
     #오른쪽
     right_alpha1 = create_alpha_array(1, 0.8, right_first_gradient_width, h)
     right_alpha2 = create_alpha_array(0.8, 0.6, right_second_gradient_width, h)
@@ -464,16 +454,23 @@ def apply_alpha_gradient_to_image_type2(image_path):
         blended_section = Image.composite(section, black_section, alpha_img)
         image.paste(blended_section, (start_width, 0))
 
-    blend_image_section(result_image, left_alpha1, first_start_width, first_end_width)
-    blend_image_section(result_image, left_alpha2, second_start_width, second_end_width)
-    blend_image_section(result_image, left_alpha3, third_start_width, third_end_width)
-    blend_image_section(result_image, left_alpha4, fourth_start_width, fourth_end_width)
+    blend_image_section(result_image, left_alpha1, left_first_start_width, left_first_end_width)
+    blend_image_section(result_image, left_alpha2, left_first_end_width, left_second_end_width)
+    blend_image_section(result_image, left_alpha3, left_second_end_width, left_third_end_width)
+    blend_image_section(result_image, left_alpha4, left_third_end_width, left_fourth_end_width)
     blend_image_section(result_image, right_alpha1, right_first_start_width, right_first_end_width)
     blend_image_section(result_image, right_alpha2, right_first_end_width, right_second_end_width)
     blend_image_section(result_image, right_alpha3, right_second_end_width, right_third_end_width)
     blend_image_section(result_image, right_alpha4, right_third_end_width, right_fourth_end_width)
 
-    result_image.save(image_path)
+    left_image = result_image.crop((0, 0, 1080, 1250))
+    right_image = result_image.crop((1080, 0, 2160, 1250))
+    image_dir = os.path.split(image_path)[0]
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+    left_output_path = os.path.join(image_dir, image_name+"_left.png")
+    right_output_path = os.path.join(image_dir, image_name+"_right.png")
+    left_image.save(left_output_path)
+    right_image.save(right_output_path)
     return result_image
 
 
