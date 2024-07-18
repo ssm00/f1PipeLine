@@ -203,8 +203,9 @@ def resize_image_type1(image_path, image_id):
 
     save_path = os.path.join(prefix_after_processing_path, str(image_id))
     os.makedirs(save_path, exist_ok=True)
-    resized_cropped_image.save(os.path.join(save_path, image_name + ".png"))
-    return resized_cropped_image
+    save_image_path = os.path.join(save_path, image_name + ".png")
+    resized_cropped_image.save(save_image_path)
+    return save_image_path
 
 
 def resize_image_type2(image_path, image_id):
@@ -234,8 +235,9 @@ def resize_image_type2(image_path, image_id):
 
     save_path = os.path.join(prefix_after_processing_path, str(image_id))
     os.makedirs(save_path, exist_ok=True)
-    resized_cropped_image.save(os.path.join(save_path, image_name + ".png"))
-    return resized_cropped_image
+    save_image_path = os.path.join(save_path, image_name + ".png")
+    resized_cropped_image.save(save_image_path)
+    return save_image_path
 
 # def apply_alpha_gradient_to_image(image_path):
 #     """
@@ -384,7 +386,7 @@ def apply_alpha_gradient_to_image_type1(image_path):
     result_image.save(output_path)
     return result_image
 
-def apply_alpha_gradient_to_image_type2(image_path, image_id):
+def apply_alpha_gradient_to_image_type2(image_path):
     """
     이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
 
@@ -398,33 +400,58 @@ def apply_alpha_gradient_to_image_type2(image_path, image_id):
     image = Image.open(image_path).convert("RGB")
 
     w, h = image.size
-    assert h == 1350 and w == 2160, "입력 이미지 크기는 1080x1350이어야 합니다."
+    assert h == 1350 and w == 2160, "입력 이미지 크기는 2160x1350이어야 합니다."
 
     # 구간 설정
+    # 왼쪽
     first_start_width = 0
-    first_end_width = 340
-    second_start_width = 340
-    second_end_width = 390
-    third_start_width = 440
-    third_end_width = 490
+    first_end_width = 440
+    second_start_width = 440
+    second_end_width = 490
+    third_start_width = 490
+    third_end_width = 540
     fourth_start_width = 540
     fourth_end_width = 590
+
+    # first_start_width = 0
+    # first_end_width = 440
+    # second_end_width = 490
+    # third_end_width = 540
+    # fourth_end_width = 590
+
+    #오른쪽
+    right_first_start_width = 1570
+    right_first_end_width = 1620
+    right_second_end_width = 1670
+    right_third_end_width = 1720
+    right_fourth_end_width = 2160
 
     first_gradient_width = first_end_width - first_start_width
     second_gradient_width = second_end_width - second_start_width
     third_gradient_width = third_end_width - third_start_width
     fourth_gradient_width = fourth_end_width - fourth_start_width
 
-    # 알파 값 생성
+    right_first_gradient_width = right_first_end_width - right_first_start_width
+    right_second_gradient_width = right_second_end_width - right_first_end_width
+    right_third_gradient_width = right_third_end_width - right_second_end_width
+    right_fourth_gradient_width = right_fourth_end_width - right_third_end_width
+
     def create_alpha_array(start, end, width, height):
-        alpha = np.linspace(start, end, width).reshape(-1, 1)
+        alpha = np.linspace(start, end, width).reshape(1, -1)
         alpha = np.repeat(alpha, height, axis=0)
         return alpha
 
-    alpha1 = create_alpha_array(1, 0.3, first_gradient_width, h)
-    alpha2 = create_alpha_array(0.3, 0.2, second_gradient_width, h)
-    alpha3 = create_alpha_array(0.2, 0.1, third_gradient_width, h)
-    alpha4 = create_alpha_array(0.1, 0, fourth_gradient_width, h)
+    #검정색 배경과 블렌딩할 알파배열 0인 투명인 상태가 블랜딩 될 시 배경은 검정 붙투명과 합쳐짐
+    #왼쪽
+    left_alpha1 = create_alpha_array(0, 0.4, first_gradient_width, h)
+    left_alpha2 = create_alpha_array(0.4, 0.6, second_gradient_width, h)
+    left_alpha3 = create_alpha_array(0.6, 0.8, third_gradient_width, h)
+    left_alpha4 = create_alpha_array(0.8, 1, fourth_gradient_width, h)
+    #오른쪽
+    right_alpha1 = create_alpha_array(1, 0.8, right_first_gradient_width, h)
+    right_alpha2 = create_alpha_array(0.8, 0.6, right_second_gradient_width, h)
+    right_alpha3 = create_alpha_array(0.6, 0.4, right_third_gradient_width, h)
+    right_alpha4 = create_alpha_array(0.4, 0, right_fourth_gradient_width, h)
 
     black_background = Image.new("RGB", (w, h), (0, 0, 0))
 
@@ -437,14 +464,18 @@ def apply_alpha_gradient_to_image_type2(image_path, image_id):
         blended_section = Image.composite(section, black_section, alpha_img)
         image.paste(blended_section, (start_width, 0))
 
-    blend_image_section(result_image, alpha1, first_start_width, first_end_width)
-    blend_image_section(result_image, alpha2, second_start_width, second_end_width)
-    blend_image_section(result_image, alpha3, third_start_width, third_end_width)
-    blend_image_section(result_image, alpha4, fourth_start_width, fourth_end_width)
+    blend_image_section(result_image, left_alpha1, first_start_width, first_end_width)
+    blend_image_section(result_image, left_alpha2, second_start_width, second_end_width)
+    blend_image_section(result_image, left_alpha3, third_start_width, third_end_width)
+    blend_image_section(result_image, left_alpha4, fourth_start_width, fourth_end_width)
+    blend_image_section(result_image, right_alpha1, right_first_start_width, right_first_end_width)
+    blend_image_section(result_image, right_alpha2, right_first_end_width, right_second_end_width)
+    blend_image_section(result_image, right_alpha3, right_second_end_width, right_third_end_width)
+    blend_image_section(result_image, right_alpha4, right_third_end_width, right_fourth_end_width)
 
-    output_path = os.path.join(prefix_after_processing_path, image_name + ".png")
-    result_image.save(output_path)
+    result_image.save(image_path)
     return result_image
+
 
 def divide_text_for_one_page(text, font, line_spacing):
     """
@@ -507,17 +538,13 @@ def add_text_to_image(image, text, position, font, box_size, text_color, line_sp
         y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
 
-def resize_alpha_adjust_type1(image_path):
-    processing1_image = resize_image_type1(image_path)
-    image_name = os.path.splitext(os.path.basename(image_path))[0]
-    processing1_path = prefix_after_processing_path + image_name + ".png"
-    apply_alpha_gradient_to_image_type1(processing1_path)
+def resize_alpha_adjust_type1(image_path, image_id):
+    processing1_image_path = resize_image_type1(image_path, image_id)
+    apply_alpha_gradient_to_image_type1(processing1_image_path, image_id)
 
 def resize_alpha_adjust_type2(image_path, image_id):
-    processing1_image = resize_image_type2(image_path, image_id)
-    image_name = os.path.splitext(os.path.basename(image_path))[0]
-    processing1_path = prefix_after_processing_path + image_name + ".png"
-    apply_alpha_gradient_to_image_type2(processing1_path)
+    processing1_image_path = resize_image_type2(image_path, image_id)
+    apply_alpha_gradient_to_image_type2(processing1_image_path)
 
 def create_main_content_type1(image_path, lines, font, line_spacing, article_type, index):
     """
@@ -678,7 +705,7 @@ def create_content_image(text, image_path_list, article_type):
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
 
-resize_image_type2(before_image_path1, "12321321")
+resize_alpha_adjust_type2(before_image_path1, "11231")
 
 # resize_alpha_adjust_type1(before_image_path1)
 # text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
