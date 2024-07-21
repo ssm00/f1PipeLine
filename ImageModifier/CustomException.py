@@ -7,3 +7,7 @@ class OutOfTextBox(Exception):
         self.size = size
         if type is not None:
             self.type = type
+
+class SizeNotFitType2(Exception):
+    def __init__(self, size):
+        self.size = size
