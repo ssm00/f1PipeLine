@@ -324,7 +324,7 @@ def resize_image_type2(image_path, image_id):
 #     cv2.imwrite(prefix_after_processing_path + image_name + ".png", result_image)
 #     return result_image
 
-def apply_alpha_gradient_to_image_type1(image_path):
+def apply_alpha_gradient_type1(image_path):
     """
     이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
 
@@ -386,7 +386,7 @@ def apply_alpha_gradient_to_image_type1(image_path):
     result_image.save(output_path)
     return result_image
 
-def apply_alpha_gradient_to_image_type2(image_path):
+def apply_alpha_gradient_type2(image_path):
     """
     이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
 
@@ -471,7 +471,7 @@ def apply_alpha_gradient_to_image_type2(image_path):
     right_output_path = os.path.join(image_dir, image_name+"_right.png")
     left_image.save(left_output_path)
     right_image.save(right_output_path)
-    return result_image
+    return left_output_path, right_output_path
 
 
 def divide_text_for_one_page(text, font, line_spacing):
@@ -537,13 +537,14 @@ def add_text_to_image(image, text, position, font, box_size, text_color, line_sp
 
 def resize_alpha_adjust_type1(image_path, image_id):
     processing1_image_path = resize_image_type1(image_path, image_id)
-    apply_alpha_gradient_to_image_type1(processing1_image_path, image_id)
+    apply_alpha_gradient_type1(processing1_image_path, image_id)
 
 def resize_alpha_adjust_type2(image_path, image_id):
     processing1_image_path = resize_image_type2(image_path, image_id)
-    apply_alpha_gradient_to_image_type2(processing1_image_path)
+    type_ = apply_alpha_gradient_type2(processing1_image_path)
 
-def create_main_content_type1(image_path, lines, font, line_spacing, article_type, index):
+
+def add_text_type1(image_path, lines, font, line_spacing, article_type, index):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -595,7 +596,7 @@ def create_main_content_type1(image_path, lines, font, line_spacing, article_typ
     output_path = prefix_after_processing_path + image_name + "_index_" + str(index) + ".png"
     result_image.save(output_path)
 
-def create_main_content_type2(image_path, text, font, line_spacing):
+def add_text_type2(image_path, text, font, line_spacing):
     """
         이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -695,7 +696,7 @@ def create_content_image(text, image_path_list, article_type):
     select_image_index_list = select_image_index(need_page_count, image_count)
     for index, lines_for_one_page in enumerate(divided_text_list):
         image_index = select_image_index_list[index]
-        create_main_content_type1(image_path_list[image_index], lines_for_one_page, font, main_content_line_spacing, article_type, index)
+        add_text_type1(image_path_list[image_index], lines_for_one_page, font, main_content_line_spacing, article_type, index)
 
 
 # 이미지 경로
