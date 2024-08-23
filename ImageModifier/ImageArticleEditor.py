@@ -200,11 +200,11 @@ def resize_image_type1(image_path, image_id):
         start_y = (new_height - target_height) // 2
         resized_cropped_image = resized_image.crop((0, start_y + 100, new_width, start_y + target_height + 100))
 
-    save_path = os.path.join(prefix_after_processing_path, str(image_id))
-    os.makedirs(save_path, exist_ok=True)
-    save_image_path = os.path.join(save_path, image_name + ".png")
-    resized_cropped_image.save(save_image_path)
-    return save_image_path
+    save_dir = os.path.join(prefix_after_processing_path, str(image_id))
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, image_name + ".png")
+    resized_cropped_image.save(save_path)
+    return save_path
 
 
 def resize_image_type2(image_path, image_id):
@@ -232,11 +232,11 @@ def resize_image_type2(image_path, image_id):
     else:
         raise CustomException.SizeNotFitType2(image.size)
 
-    save_path = os.path.join(prefix_after_processing_path, str(image_id))
-    os.makedirs(save_path, exist_ok=True)
-    save_image_path = os.path.join(save_path, image_name + ".png")
-    resized_cropped_image.save(save_image_path)
-    return save_image_path
+    save_dir = os.path.join(prefix_after_processing_path, str(image_id))
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, image_name + ".png")
+    resized_cropped_image.save(save_path)
+    return save_path
 
 # def apply_alpha_gradient_to_image(image_path):
 #     """
@@ -323,7 +323,7 @@ def resize_image_type2(image_path, image_id):
 #     cv2.imwrite(prefix_after_processing_path + image_name + ".png", result_image)
 #     return result_image
 
-def apply_alpha_gradient_type1(image_path):
+def apply_alpha_gradient_type1(image_path, image_id):
     """
     이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
 
@@ -381,11 +381,12 @@ def apply_alpha_gradient_type1(image_path):
     blend_image_section(result_image, alpha3, third_start_height, third_end_height)
     blend_image_section(result_image, alpha4, fourth_start_height, fourth_end_height)
 
-    output_path = os.path.join(prefix_after_processing_path, image_name + ".png")
-    result_image.save(output_path)
+    save_dir = os.path.join(prefix_after_processing_path, str(image_id))
+    save_path = os.path.join(save_dir, image_name + ".png")
+    result_image.save(save_path)
     return result_image
 
-def apply_alpha_gradient_type2(image_path):
+def apply_alpha_gradient_type2(image_path, image_id):
     """
     이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
 
@@ -464,13 +465,15 @@ def apply_alpha_gradient_type2(image_path):
 
     left_image = result_image.crop((0, 0, 1080, 1250))
     right_image = result_image.crop((1080, 0, 2160, 1250))
-    image_dir = os.path.split(image_path)[0]
+
+    save_dir = os.path.join(prefix_after_processing_path, str(image_id))
     image_name = os.path.splitext(os.path.basename(image_path))[0]
-    left_output_path = os.path.join(image_dir, image_name+"_left.png")
-    right_output_path = os.path.join(image_dir, image_name+"_right.png")
-    left_image.save(left_output_path)
-    right_image.save(right_output_path)
-    return left_output_path, right_output_path
+    left_save_path = os.path.join(save_dir, image_name+"_left.png")
+    right_save_path = os.path.join(save_dir, image_name+"_right.png")
+
+    left_image.save(left_save_path)
+    right_image.save(right_save_path)
+    return left_save_path, right_save_path
 
 
 def divide_text_for_one_page(text, font, line_spacing):
@@ -540,7 +543,7 @@ def resize_alpha_adjust_type1(image_path, image_id):
 
 def resize_alpha_adjust_type2(image_path, image_id):
     processing1_image_path = resize_image_type2(image_path, image_id)
-    type_ = apply_alpha_gradient_type2(processing1_image_path)
+    left_path, right_path = apply_alpha_gradient_type2(processing1_image_path)
 
 
 def add_text_type1(image_path, lines, font, line_spacing, article_type, index):
@@ -703,11 +706,11 @@ def start(text, image_path_list, article_type):
     divided_text_list = divide_text_for_one_page(text, font, main_content_line_spacing)
     need_page_count = len(divided_text_list)
     image_count = len(image_path_list)
-    select_image_index_list = divide_image_index(need_page_count, image_count)
-    create_content_image_with_text(article_type, divided_text_list, font, image_path_list, select_image_index_list)
+    select_image_count_list = divide_image_index(need_page_count, image_count)
+    create_content_image_with_text(article_type, divided_text_list, font, image_path_list, select_image_count_list)
 
     # for index, lines_for_one_page in enumerate(divided_text_list):
-    #     image_index = select_image_index_list[index]
+    #     image_index = select_image_count_list[index]
     #     add_text_type1(image_path_list[image_index], lines_for_one_page, font, main_content_line_spacing, article_type, index)
 
 ### 여기서 다시 시작
@@ -724,7 +727,7 @@ def create_content_image_with_text(article_type, divided_text_list, font, image_
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
 
-start()
+#start()
 # resize_alpha_adjust_type1(before_image_path1)
 # text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
 # img_list = []
