@@ -17,7 +17,6 @@ main_content_font_size = 40
 
 type2_size = (2160, 1350)
 
-
 # def add_icon_to_image(image_path, icon_path, position):
 #     """
 #     이미지에 아이콘을 추가
@@ -672,39 +671,60 @@ def create_title_image(image_path, title, sub_title, article_type):
         print("타이틀 이미지 저장 성공")
 
 
-def select_image_index(need_page_count, image_count):
+def divide_image_index(need_page_count, image_count):
     """
     페이지 갯수와 이미지 갯수가 맞지 않는 경우 페이지별로 사용할 이미지 정하기
     페이지 갯수를 이미지 갯수로 나눈 몫만큼 나눈뒤 남은 페이지만큼 앞번호부터 이미지 중복 사용
     Examples image3개 page 5개인 경우
-    Returns [0,0,1,1,2] 설명 : 1페이지 0번 이미지 2페이지 0번 이미지 3페이지 1번 이미지
+    Returns [2,2,1] 설명 : 1번 이미지 2번사용 2이미지 2번사용 3번 이미지 1번 사용
     """
     select_image_index_list = []
     page_per_image = need_page_count // image_count
     res_image_count = need_page_count % image_count
     for i in range(image_count):
-        count = page_per_image + (1 if i < res_image_count else 0)
-        select_image_index_list.extend([i] * count)
+        select_image_index_list.append(page_per_image)
+    for i in range(res_image_count):
+        select_image_index_list[i] += 1
     return select_image_index_list
 
-def create_content_image(text, image_path_list, article_type):
+def start(text, image_path_list, article_type):
+    """
+    주어진 사진 갯수와 컨텐츠 내용을 기반으로 이미지 생성
+    Args:
+        text:
+        image_path_list:
+        article_type:
+
+    Returns:
+
+    """
     font = ImageFont.truetype(font_path, main_content_font_size)
 
     divided_text_list = divide_text_for_one_page(text, font, main_content_line_spacing)
     need_page_count = len(divided_text_list)
     image_count = len(image_path_list)
-    select_image_index_list = select_image_index(need_page_count, image_count)
-    for index, lines_for_one_page in enumerate(divided_text_list):
-        image_index = select_image_index_list[index]
-        add_text_type1(image_path_list[image_index], lines_for_one_page, font, main_content_line_spacing, article_type, index)
+    select_image_index_list = divide_image_index(need_page_count, image_count)
+    create_content_image_with_text(article_type, divided_text_list, font, image_path_list, select_image_index_list)
 
+    # for index, lines_for_one_page in enumerate(divided_text_list):
+    #     image_index = select_image_index_list[index]
+    #     add_text_type1(image_path_list[image_index], lines_for_one_page, font, main_content_line_spacing, article_type, index)
+
+### 여기서 다시 시작
+def create_content_image_with_text(article_type, divided_text_list, font, image_path_list, select_image_index_list):
+    text_num = 0
+    for index, image_usage_count in enumerate(select_image_index_list):
+        image_path = image_path_list[index]
+        for i in range(image_usage_count):
+            text = divided_text_list[text_num]
+            add_text_type1(image_path, text, font, main_content_line_spacing, article_type, index)
+            text_num += 1
 
 # 이미지 경로
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
 
-resize_alpha_adjust_type2(before_image_path1, "11231")
-
+start()
 # resize_alpha_adjust_type1(before_image_path1)
 # text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
 # img_list = []
