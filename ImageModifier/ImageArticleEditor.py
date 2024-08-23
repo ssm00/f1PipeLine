@@ -384,7 +384,7 @@ def apply_alpha_gradient_type1(image_path, image_id):
     save_dir = os.path.join(prefix_after_processing_path, str(image_id))
     save_path = os.path.join(save_dir, image_name + ".png")
     result_image.save(save_path)
-    return result_image
+    return save_path
 
 def apply_alpha_gradient_type2(image_path, image_id):
     """
@@ -543,8 +543,7 @@ def resize_alpha_adjust_type1(image_path, image_id):
 
 def resize_alpha_adjust_type2(image_path, image_id):
     processing1_image_path = resize_image_type2(image_path, image_id)
-    left_path, right_path = apply_alpha_gradient_type2(processing1_image_path)
-
+    left_path, right_path = apply_alpha_gradient_type2(processing1_image_path, image_id)
 
 def add_text_type1(image_path, lines, font, line_spacing, article_type, index):
     """
@@ -726,6 +725,8 @@ def create_content_image_with_text(article_type, divided_text_list, font, image_
 # 이미지 경로
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
+
+resize_alpha_adjust_type2(before_image_path1, "33")
 
 #start()
 # resize_alpha_adjust_type1(before_image_path1)
