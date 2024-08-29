@@ -613,7 +613,7 @@ def add_text_type1(image_path, lines, font, line_spacing, article_type, index, i
     result_image = image.convert('RGB')  # RGBA를 RGB로 변환
     # 결과 저장
     save_dir = os.path.join(prefix_after_processing_path, str(image_id))
-    output_path = save_dir + image_name + "_index_" + str(index) + ".png"
+    output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".png")
     result_image.save(output_path)
 
 def add_text_type2(image_path, text, font, line_spacing, article_type, index, left_or_right, image_id):
@@ -665,7 +665,7 @@ def add_text_type2(image_path, text, font, line_spacing, article_type, index, le
     result_image = image.convert('RGB')  # RGBA를 RGB로 변환
     # 결과 저장
     save_dir = os.path.join(prefix_after_processing_path, str(image_id))
-    output_path = save_dir + image_name + "_index_" + str(index) + ".png"
+    output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".png")
     result_image.save(output_path)
 
 def create_title_image(image_path, title, sub_title, article_type):
@@ -764,7 +764,7 @@ right_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_F
 font = ImageFont.truetype(font_path, main_content_font_size)
 text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다.베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다.베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다.베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
 print(len(text))
-add_text_type2(right_path, text, font, main_content_line_spacing,  "Information", 2, "right")
+add_text_type2(right_path, text, font, main_content_line_spacing,  "Information", 2, "right", 34)
 
 
 #start()
