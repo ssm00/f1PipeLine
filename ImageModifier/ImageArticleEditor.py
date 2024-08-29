@@ -572,7 +572,7 @@ def resize_alpha_adjust_type2(image_path, image_id):
     processing1_image_path = resize_image_type2(image_path, image_id)
     left_path, right_path = split_apply_alpha_gradient_type2(processing1_image_path, image_id)
 
-def add_text_type1(image_path, lines, font, line_spacing, article_type, index):
+def add_text_type1(image_path, lines, font, line_spacing, article_type, index, image_id):
     """
     이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -612,10 +612,11 @@ def add_text_type1(image_path, lines, font, line_spacing, article_type, index):
 
     result_image = image.convert('RGB')  # RGBA를 RGB로 변환
     # 결과 저장
-    output_path = prefix_after_processing_path + image_name + "_index_" + str(index) + ".png"
+    save_dir = os.path.join(prefix_after_processing_path, str(image_id))
+    output_path = save_dir + image_name + "_index_" + str(index) + ".png"
     result_image.save(output_path)
 
-def add_text_type2(image_path, text, font, line_spacing, article_type, index, left_or_right):
+def add_text_type2(image_path, text, font, line_spacing, article_type, index, left_or_right, image_id):
     """
         이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -663,7 +664,8 @@ def add_text_type2(image_path, text, font, line_spacing, article_type, index, le
 
     result_image = image.convert('RGB')  # RGBA를 RGB로 변환
     # 결과 저장
-    output_path = prefix_after_processing_path + image_name + "_index_" + str(index) + ".png"
+    save_dir = os.path.join(prefix_after_processing_path, str(image_id))
+    output_path = save_dir + image_name + "_index_" + str(index) + ".png"
     result_image.save(output_path)
 
 def create_title_image(image_path, title, sub_title, article_type):
