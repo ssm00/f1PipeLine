@@ -17,6 +17,32 @@ main_content_font_size = 40
 
 type2_size = (2160, 1350)
 
+
+def select_article_line(article_type, line_type):
+    if line_type == "type1":
+        if article_type == "Information":
+            line_path = '../prefab/information_line_440.png'
+        elif article_type == "Breaking":
+            line_path = '../prefab/breaking_line_440.png'
+        elif article_type == "Official":
+            line_path = '../prefab/official_line_440.png'
+        elif article_type == "Tech":
+            line_path = '../prefab/tech_line_440.png'
+        elif article_type == "Rumor":
+            line_path = '../prefab/rumor_line_440.png'
+    elif line_type == "type2":
+        if article_type == "Information":
+            line_path = '../prefab/information_line_1050.png'
+        elif article_type == "Breaking":
+            line_path = '../prefab/breaking_line_1050.png'
+        elif article_type == "Official":
+            line_path = '../prefab/official_line_1050.png'
+        elif article_type == "Tech":
+            line_path = '../prefab/tech_line_1050.png'
+        elif article_type == "Rumor":
+            line_path = '../prefab/rumor_line_1050.png'
+    return line_path
+
 # def add_icon_to_image(image_path, icon_path, position):
 #     """
 #     이미지에 아이콘을 추가
@@ -386,12 +412,12 @@ def apply_alpha_gradient_type1(image_path, image_id):
     result_image.save(save_path)
     return save_path
 
-def apply_alpha_gradient_type2(image_path, image_id):
+def split_apply_alpha_gradient_type2(image_path, image_id):
     """
     이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
 
     Parameters:
-    - image: 처리할 21600x1350 이미지
+    - image: 처리할 2160x1350 이미지
 
     Returns:
     - 그라데이션 처리가 된 2160x1350 이미지
@@ -463,8 +489,10 @@ def apply_alpha_gradient_type2(image_path, image_id):
     blend_image_section(result_image, right_alpha3, right_second_end_width, right_third_end_width)
     blend_image_section(result_image, right_alpha4, right_third_end_width, right_fourth_end_width)
 
-    left_image = result_image.crop((0, 0, 1080, 1250))
-    right_image = result_image.crop((1080, 0, 2160, 1250))
+    width = type2_size[0]
+    height = type2_size[1]
+    left_image = result_image.crop((0, 0, width / 2, height))
+    right_image = result_image.crop((width / 2, 0, width, height))
 
     save_dir = os.path.join(prefix_after_processing_path, str(image_id))
     image_name = os.path.splitext(os.path.basename(image_path))[0]
@@ -510,8 +538,7 @@ def split_text_by_textboxsize(text, font, line_spacing, max_size, text_type):
         if (font.size + line_spacing) * len(lines) > max_height:
             raise CustomException.OutOfTextBox(font.size, text_type)
         line = ''
-        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (
-                len(lines) + 1) <= max_height:
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
             if words[0].endswith("."):
                 line = line + (words.pop(0) + ' ')
                 break
@@ -543,7 +570,7 @@ def resize_alpha_adjust_type1(image_path, image_id):
 
 def resize_alpha_adjust_type2(image_path, image_id):
     processing1_image_path = resize_image_type2(image_path, image_id)
-    left_path, right_path = apply_alpha_gradient_type2(processing1_image_path, image_id)
+    left_path, right_path = split_apply_alpha_gradient_type2(processing1_image_path, image_id)
 
 def add_text_type1(image_path, lines, font, line_spacing, article_type, index):
     """
@@ -559,16 +586,7 @@ def add_text_type1(image_path, lines, font, line_spacing, article_type, index):
     image = Image.open(image_path).convert('RGBA')
     draw = ImageDraw.Draw(image)
 
-    if article_type == "Information":
-        line_path = '../prefab/information_line_440.png'
-    elif article_type == "Breaking":
-        line_path = '../prefab/breaking_line_440.png'
-    elif article_type == "Official":
-        line_path = '../prefab/official_line_440.png'
-    elif article_type == "Tech":
-        line_path = '../prefab/tech_line_440.png'
-    elif article_type == "Rumor":
-        line_path = '../prefab/rumor_line_440.png'
+    line_path = select_article_line(article_type, "type1")
     line_position = (50, 780)  # (x, y)
     image = add_icon_to_image(image, line_path, line_position)
 
@@ -597,13 +615,18 @@ def add_text_type1(image_path, lines, font, line_spacing, article_type, index):
     output_path = prefix_after_processing_path + image_name + "_index_" + str(index) + ".png"
     result_image.save(output_path)
 
-def add_text_type2(image_path, text, font, line_spacing):
+def add_text_type2(image_path, text, font, line_spacing, article_type, index, left_or_right):
     """
         이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
     image_name = os.path.splitext(os.path.basename(image_path))[0]
-    position = (120, 800)  # 텍스트를 추가할 위치 (x, y)
-    box_size = (900, 370)  # 텍스트 박스 크기 (width, height)
+    if left_or_right == "left":
+        position = (90, 150)  # 텍스트를 추가할 위치 (x, y)
+        line_position = (40, 150)  # (x, y)
+    elif left_or_right == "right":
+        position = (560, 150)
+        line_position = (1020, 150)  # (x, y)
+    box_size = (430, 1050)  # 텍스트 박스 크기 (width, height)
     text_color = (255, 255, 255)  # 흰색
     box_color = (255, 255, 255)
 
@@ -611,16 +634,19 @@ def add_text_type2(image_path, text, font, line_spacing):
     image = Image.open(image_path).convert('RGBA')
     draw = ImageDraw.Draw(image)
 
+    line_path = select_article_line(article_type, "type2")
+    image = add_icon_to_image(image, line_path, line_position)
+
     # 텍스트 줄바꿈 처리
-    lines = []
-    words = text.split(' ')
     max_width, max_height = box_size
     x, y = position
+    #draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
 
-    # draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
+    lines = []
+    words = text.split(' ')
     while words:
         line = ''
-        while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
+        while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width or line == '':
             if (words[0].endswith(".")):
                 line = line + (words.pop(0) + ' ')
                 break
@@ -628,14 +654,17 @@ def add_text_type2(image_path, text, font, line_spacing):
         lines.append(line)
 
     for line in lines:
-        draw.text((x, y), line, font=font, fill=text_color)
+        if left_or_right == "left":
+            draw.text((x, y), line, font=font, fill=text_color)
+        else:  # right alignment
+            text_width = draw.textbbox((0, 0), line, font=font)[2]
+            draw.text((x + max_width - text_width, y), line, font=font, fill=text_color)
         y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
     result_image = image.convert('RGB')  # RGBA를 RGB로 변환
     # 결과 저장
-    output_path = prefix_after_processing_path + image_name + ".png"
+    output_path = prefix_after_processing_path + image_name + "_index_" + str(index) + ".png"
     result_image.save(output_path)
-
 
 def create_title_image(image_path, title, sub_title, article_type):
     title_box_size = (900, 174)
@@ -726,11 +755,18 @@ def create_content_image_with_text(article_type, divided_text_list, font, image_
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
 
-resize_alpha_adjust_type2(before_image_path1, "33")
+resize_alpha_adjust_type2(before_image_path1, "34")
+
+left_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_left.png"
+right_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_right.png"
+font = ImageFont.truetype(font_path, main_content_font_size)
+text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다.베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다.베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다.베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
+print(len(text))
+add_text_type2(right_path, text, font, main_content_line_spacing,  "Information", 2, "right")
+
 
 #start()
 # resize_alpha_adjust_type1(before_image_path1)
-# text = "베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다."
 # img_list = []
 # img_list.append(image_path)
 #
