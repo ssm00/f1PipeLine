@@ -8,3 +8,4 @@ __pycache__/
 *.png
 SeleniumBase/
 ArticleCrawler/test.py
+/ImageModifier/__pycache__
