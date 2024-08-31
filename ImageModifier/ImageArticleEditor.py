@@ -17,6 +17,8 @@ main_content_font_size = 40
 
 type2_size = (2160, 1350)
 
+type1_text_length = 160
+type2_text_length = 220
 
 def select_article_line(article_type, line_type):
     if line_type == "type1":
@@ -504,7 +506,7 @@ def split_apply_alpha_gradient_type2(image_path, image_id):
     return left_save_path, right_save_path
 
 
-def divide_text_for_one_page(text, font, line_spacing):
+def split_text_for_one_page(text, font, line_spacing):
     """
         전체 text를 max_width, max_height 기반으로 나누기
     """
@@ -515,8 +517,7 @@ def divide_text_for_one_page(text, font, line_spacing):
     words = text.split(' ')
     while words:
         line = ''
-        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (
-                len(lines) + 1) <= max_height:
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
             if words[0].endswith("."):
                 line = line + (words.pop(0) + ' ')
                 break
@@ -528,9 +529,58 @@ def divide_text_for_one_page(text, font, line_spacing):
     pages.append(lines)
     return pages
 
+def extract_text_for_one_page(words, font, line_spacing, textbox_type):
+    """
+        전체 text를 max_width, max_height 기반으로 나누기
+    """
+    lines = []
+    pages = []
+    if textbox_type == "type1":
+        max_width = 900
+        max_height = 370
+    elif textbox_type == "type2":
+        max_width = 430
+        max_height = 1050
+    while words:
+        line = ''
+        while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
+            if words[0].endswith("."):
+                line = line + (words.pop(0) + ' ')
+                break
+            line = line + (words.pop(0) + ' ')
+        lines.append(line.strip())
+    return words, lines
+
+def split_text_by_textbox_type(text_type_list, text):
+
+
+
+
+    words = text.split(' ')
+
+def calculate_type(text_length, image_count):
+    # type1으로 모두 만들수 있는 경우
+    text_type_list = []
+    if text_length < image_count * type1_text_length:
+        for i in range(image_count):
+            text_type_list.append(1)
+        return text_type_list
+    else:
+        current_sum = 0
+        for _ in range(image_count):
+            if current_sum + type2_text_length > text_length:
+                break
+            text_type_list.append(2)
+            # type2는 2개가 생성되므로 * 2
+            current_sum += type2_text_length * 2
+        while len(text_type_list) < image_count:
+
+
+
+
 
 # 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
-def split_text_by_textboxsize(text, font, line_spacing, max_size, text_type):
+def adjust_text_by_textbox_size(text, font, line_spacing, max_size, text_type):
     max_width, max_height = max_size
     words = text.split(' ')
     lines = []
@@ -558,7 +608,7 @@ def add_text_to_image(image, text, position, font, box_size, text_color, line_sp
     x, y = position
     max_width, max_height = box_size
     # draw.rectangle([x, y, x + max_width, y + max_height], fill=(1,1,1))
-    lines = split_text_by_textboxsize(text, font, line_spacing, box_size, text_type)
+    lines = adjust_text_by_textbox_size(text, font, line_spacing, box_size, text_type)
     for line in lines:
         draw.text((x, y), line, font=font, fill=text_color)
         y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
@@ -647,12 +697,21 @@ def add_text_type2(image_path, text, font, line_spacing, article_type, index, le
     words = text.split(' ')
     while words:
         line = ''
-        while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width or line == '':
+        while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
             if (words[0].endswith(".")):
                 line = line + (words.pop(0) + ' ')
                 break
             line = line + (words.pop(0) + ' ')
         lines.append(line)
+        if (font.size + line_spacing) * (len(lines) + 1) >= max_height:
+            break
+
+    #220
+    #160
+    c = 0
+    for line in lines:
+        c += len(line)
+    print(c)
 
     for line in lines:
         if left_or_right == "left":
@@ -733,7 +792,7 @@ def start(text, image_path_list, article_type):
     """
     font = ImageFont.truetype(font_path, main_content_font_size)
 
-    divided_text_list = divide_text_for_one_page(text, font, main_content_line_spacing)
+    divided_text_list = split_text_for_one_page(text, font, main_content_line_spacing)
     need_page_count = len(divided_text_list)
     image_count = len(image_path_list)
     select_image_count_list = divide_image_index(need_page_count, image_count)
@@ -757,15 +816,15 @@ def create_content_image_with_text(article_type, divided_text_list, font, image_
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
 before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg"
 
-resize_alpha_adjust_type2(before_image_path1, "34")
+#resize_alpha_adjust_type2(before_image_path1, "34")
 
 left_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_left.png"
 right_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_right.png"
 font = ImageFont.truetype(font_path, main_content_font_size)
-text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다.베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다.베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다.베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
-print(len(text))
+text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다. 베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
 add_text_type2(right_path, text, font, main_content_line_spacing,  "Information", 2, "right", 34)
 
+#adjust_text_by_textbox_size(text, font, main_content_line_spacing, (430, 1050))
 
 #start()
 # resize_alpha_adjust_type1(before_image_path1)
