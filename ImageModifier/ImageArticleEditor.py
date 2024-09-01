@@ -165,44 +165,6 @@ def add_title_icon_to_image(image_path, article_type):
     output_path = os.path.join(prefix_after_processing_path, image_name + ".png")
     image_with_line.save(output_path, "PNG")
 
-# def resize_image_type1(image_path):
-#     """
-#     1080, 1350 resize
-#     """
-#     image_name = os.path.splitext(os.path.basename(image_path))[0]
-#     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-#     h, w = image.shape[:2]
-#     target_size = (1080, 1350)
-#     target_height = target_size[1]
-#     target_width = target_size[0]
-#     proportion_h = target_size[1] / h
-#     proportion_w = target_size[0] / w
-#     # 먼저 가로 세로 중 작은 부분을 target_size에 맞게 사진을 늘려야함
-#     # 가로나 세로중 하나를 항상 기준으로 하면 크기가 큰 사진이 줄어드는 경우 가로 세로중 더 짧은 쪽은 검정 target보다 작아 공백이 되는 경우가 발생할 수 있음. 케이스 분리필요함
-#     # 가로가 긴 사진인 경우
-#     if w > h:
-#         # 세로를 정해진 비율 만큼 늘리거나 줄이기 가로는 어차피 target_w 넘어감
-#         new_height = target_height + 100
-#         new_width = int(proportion_h * w)
-#         resized_image = cv2.resize(image, (new_width, new_height))
-#         # 사진 스타트 포인트 구하기 (new_width / 2) - (target_with / 2) = (new_width - target_width) / 2
-#         start_x = (new_width - target_width) // 2
-#         # 세로 전체, 가로는 start_x 부터 start_x + target_width 까지
-#         resized_cropped_image = resized_image[100:new_height, start_x: start_x + target_width]
-#     # 세로가 긴 사진인 경우
-#     else:
-#         # 가로를 정해진 비율 만큼 늘리거나 줄이기 세로는 어차피 target_h 넘어감
-#         new_height = int(proportion_w * h)
-#         new_width = target_width
-#         resized_image = cv2.resize(image, (new_width, new_height))
-#         # 사진 스타트 포인트 구하기 (new_width / 2) - (target_with / 2) = (new_width - target_width) / 2
-#         start_y = (new_height - target_height) // 2
-#         # 세로 전체, 가로는 start_x 부터 start_x + target_width 까지
-#         # 사진은 0,0 이 우상단임
-#         resized_cropped_image = resized_image[start_y + 100:start_y + target_height + 100, :]
-#     cv2.imwrite(prefix_after_processing_path + image_name + ".png", resized_cropped_image)
-#     return resized_cropped_image
-
 def resize_image_type1(image_path, image_id):
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     image = Image.open(image_path)
@@ -529,9 +491,12 @@ def split_text_for_one_page(text, font, line_spacing):
     pages.append(lines)
     return pages
 
+#실제 text를 타입별로 나누기
 def extract_text_for_one_page(words, font, line_spacing, textbox_type):
     """
         전체 text를 max_width, max_height 기반으로 나누기
+        Returns
+        한 페이지에 들어가는 텍스트와 남은 words들
     """
     lines = []
     pages = []
@@ -551,32 +516,27 @@ def extract_text_for_one_page(words, font, line_spacing, textbox_type):
         lines.append(line.strip())
     return words, lines
 
-def split_text_by_textbox_type(text_type_list, text):
-
-
-
-
-    words = text.split(' ')
-
-def calculate_type(text_length, image_count):
+def calculate_type(text, image_count):
     # type1으로 모두 만들수 있는 경우
+    text_length = len(text)
     text_type_list = []
     if text_length < image_count * type1_text_length:
         for i in range(image_count):
             text_type_list.append(1)
-        return text_type_list
     else:
         current_sum = 0
-        for _ in range(image_count):
-            if current_sum + type2_text_length > text_length:
+        #마지막은 무조건 타입 1로 하기 타입1은 중복 사진 생성 괜찮으나 타입 2 사진 중복 생성 막아둠(이상할듯)
+        for _ in range(image_count-1):
+            if current_sum + type2_text_length * 2 > text_length:
                 break
             text_type_list.append(2)
-            # type2는 2개가 생성되므로 * 2
+            # type2는 1번사용시 이미지 2개가 생성되므로 * 2
             current_sum += type2_text_length * 2
-        while len(text_type_list) < image_count:
-
-
-
+        while current_sum < text_length and len(text_type_list) < image_count:
+            text_type_list.append(1)
+            current_sum += type1_text_length
+    print(text_type_list)
+    return text_type_list
 
 
 # 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
@@ -706,13 +666,6 @@ def add_text_type2(image_path, text, font, line_spacing, article_type, index, le
         if (font.size + line_spacing) * (len(lines) + 1) >= max_height:
             break
 
-    #220
-    #160
-    c = 0
-    for line in lines:
-        c += len(line)
-    print(c)
-
     for line in lines:
         if left_or_right == "left":
             draw.text((x, y), line, font=font, fill=text_color)
@@ -779,6 +732,17 @@ def divide_image_index(need_page_count, image_count):
         select_image_index_list[i] += 1
     return select_image_index_list
 
+
+### 여기서 다시 시작
+def create_content_image_with_text(article_type, divided_text_list, font, image_path_list, select_image_index_list):
+    text_num = 0
+    for index, image_usage_count in enumerate(select_image_index_list):
+        image_path = image_path_list[index]
+        for i in range(image_usage_count):
+            text = divided_text_list[text_num]
+            add_text_type1(image_path, text, font, main_content_line_spacing, article_type, index)
+            text_num += 1
+
 def start(text, image_path_list, article_type):
     """
     주어진 사진 갯수와 컨텐츠 내용을 기반으로 이미지 생성
@@ -802,15 +766,6 @@ def start(text, image_path_list, article_type):
     #     image_index = select_image_count_list[index]
     #     add_text_type1(image_path_list[image_index], lines_for_one_page, font, main_content_line_spacing, article_type, index)
 
-### 여기서 다시 시작
-def create_content_image_with_text(article_type, divided_text_list, font, image_path_list, select_image_index_list):
-    text_num = 0
-    for index, image_usage_count in enumerate(select_image_index_list):
-        image_path = image_path_list[index]
-        for i in range(image_usage_count):
-            text = divided_text_list[text_num]
-            add_text_type1(image_path, text, font, main_content_line_spacing, article_type, index)
-            text_num += 1
 
 # 이미지 경로
 image_path = prefix_after_processing_path + 'Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.png'
@@ -821,8 +776,9 @@ before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferr
 left_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_left.png"
 right_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_right.png"
 font = ImageFont.truetype(font_path, main_content_font_size)
-text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다. 베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
+text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다. 베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? , 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? , 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
 add_text_type2(right_path, text, font, main_content_line_spacing,  "Information", 2, "right", 34)
+calculate_type(text, 3)
 
 #adjust_text_by_textbox_size(text, font, main_content_line_spacing, (430, 1050))
 
