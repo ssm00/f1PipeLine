@@ -45,75 +45,6 @@ def select_article_line(article_type, line_type):
             line_path = '../prefab/rumor_line_1050.png'
     return line_path
 
-# def add_icon_to_image(image_path, icon_path, position):
-#     """
-#     이미지에 아이콘을 추가
-#
-#     Parameters:
-#     - image_path: 기본 이미지 경로
-#     - icon_path: 추가할 아이콘 이미지 경로
-#     - position: 아이콘을 추가할 위치 (x, y)
-#
-#     Returns:
-#     - 아이콘이 추가된 이미지
-#     """
-#     # 기본 이미지 로드 (OpenCV 사용)
-#     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-#     if image is None:
-#         raise FileNotFoundError(f"Image at path '{image_path}' not found.")
-#
-#     # 아이콘 이미지 로드 (Pillow 사용)
-#     icon = Image.open(icon_path)
-#     if icon is None:
-#         raise FileNotFoundError(f"Icon at path '{icon_path}' not found.")
-#
-#     # 기본 이미지를 Pillow 이미지로 변환
-#     image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-#
-#     # 아이콘 이미지의 크기 얻기
-#     icon_width, icon_height = icon.size
-#
-#     # 아이콘을 추가할 위치 (x, y) 설정
-#     x, y = position
-#
-#     # 아이콘을 기본 이미지에 붙여넣기
-#     image_pil.paste(icon, (x, y), icon.convert('RGBA'))
-#
-#     # 결과 이미지를 다시 OpenCV 이미지로 변환
-#     result_image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
-#     return result_image
-#
-#
-# # article_type은
-# # Information, Breaking, Official, Tech, Rumor 다섯가지
-# def add_title_icon_to_image(image_path, article_type):
-#     image_name = os.path.splitext(os.path.basename(image_path))[0]
-#     if article_type == "Information":
-#         icon_path = '../prefab/information_icon.png'
-#         line_path = '../prefab/information_line_440.png'
-#     elif article_type == "Breaking":
-#         icon_path = '../prefab/breaking_icon.png'
-#         line_path = '../prefab/breaking_line_440.png'
-#     elif article_type == "Official":
-#         icon_path = '../prefab/official_icon.png'
-#         line_path = '../prefab/official_line_440.png'
-#     elif article_type == "Tech":
-#         icon_path = '../prefab/tech_icon.png'
-#         line_path = '../prefab/tech_line_440.png'
-#     elif article_type == "Rumor":
-#         icon_path = '../prefab/rumor_icon.png'
-#         line_path = '../prefab/rumor_line_440.png'
-#     icon_position = (50, 700)  # (x, y)
-#     line_position = (50, 780)  # (x, y)
-#
-#     image_with_icon = add_icon_to_image(image_path, icon_path, icon_position)
-#     output_path = prefix_after_processing_path + image_name + ".png"
-#     cv2.imwrite(output_path, image_with_icon)
-#
-#     image_with_line = add_icon_to_image(output_path, line_path, line_position)
-#     output_path = prefix_after_processing_path + image_name + ".png"
-#     cv2.imwrite(output_path, image_with_line)
-
 def add_icon_to_image(image, icon_path, position):
     """
     이미지에 아이콘을 추가
@@ -179,14 +110,14 @@ def resize_image_type1(image_path, image_id):
     if w > h:
         new_height = target_height + 100
         new_width = int(proportion_h * w)
-        resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
+        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
         start_x = (new_width - target_width) // 2
         resized_cropped_image = resized_image.crop((start_x, 100, start_x + target_width, new_height))
     # 세로가 긴 사진인 경우
     else:
         new_height = int(proportion_w * h)
         new_width = target_width
-        resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
+        resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
         start_y = (new_height - target_height) // 2
         resized_cropped_image = resized_image.crop((0, start_y + 100, new_width, start_y + target_height + 100))
 
@@ -377,7 +308,7 @@ def split_apply_alpha_gradient_type2(image_path, image_id):
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     left_save_path = os.path.join(save_dir, image_name+"_left.png")
     right_save_path = os.path.join(save_dir, image_name+"_right.png")
-
+    os.remove(image_path)
     left_image.save(left_save_path)
     right_image.save(right_save_path)
     return left_save_path, right_save_path
@@ -428,6 +359,8 @@ def extract_text_for_one_page(words, font, line_spacing, textbox_type):
                 break
             line = line + (words.pop(0) + ' ')
         lines.append(line.strip())
+        if (font.size + line_spacing) * (len(lines) + 1) >= max_height:
+            break
     return words, lines
 
 # 이미지 갯수와 텍스트박스 사이즈를 기반으로 사용할 type1 or type2 예측
@@ -450,7 +383,6 @@ def predict_type_mix(text, image_count):
         while current_sum < text_length and len(text_type_list) < image_count:
             text_type_list.append("type1")
             current_sum += type1_text_length
-    print(text_type_list)
     return text_type_list
 
 # 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
@@ -497,6 +429,7 @@ def resize_alpha_adjust_type1(image_path, image_id):
 def resize_alpha_adjust_type2(image_path, image_id):
     processing1_image_path = resize_image_type2(image_path, image_id)
     left_path, right_path = split_apply_alpha_gradient_type2(processing1_image_path, image_id)
+    return left_path, right_path
 
 def add_text_type1(image_path, lines, font, line_spacing, article_type, index, image_id):
     """
@@ -541,6 +474,7 @@ def add_text_type1(image_path, lines, font, line_spacing, article_type, index, i
     save_dir = os.path.join(prefix_after_processing_path, str(image_id))
     output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".png")
     result_image.save(output_path)
+    os.remove(image_path)
 
 def add_text_type2(image_path, lines, font, line_spacing, article_type, index, left_or_right, image_id):
     """
@@ -595,6 +529,7 @@ def add_text_type2(image_path, lines, font, line_spacing, article_type, index, l
     save_dir = os.path.join(prefix_after_processing_path, str(image_id))
     output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".png")
     result_image.save(output_path)
+    os.remove(image_path)
 
 def create_title_image(image_path, title, sub_title, article_type):
     title_box_size = (900, 174)
@@ -692,18 +627,24 @@ def create_main_content(text, image_path_list, article_type, image_id, only_type
             if text_type == "type1" and len(words) != 0:
                 left_words, lines = extract_text_for_one_page(words, font, main_content_line_spacing, text_type)
                 save_path = resize_alpha_adjust_type1(image_path_list[index], image_id)
-                add_text_type1(save_path, lines, font, main_content_line_spacing, article_type, ++image_index, image_id)
+                image_index += 1
+                add_text_type1(save_path, lines, font, main_content_line_spacing, article_type, image_index, image_id)
                 words = left_words
             elif text_type == "type2" and len(words) != 0:
                 left_path, right_path = resize_alpha_adjust_type2(image_path_list[index], image_id)
-                left_words, lines = extract_text_for_one_page(words, font, main_content_line_spacing, text_type)
-                add_text_type2(left_path, lines, font, main_content_line_spacing, article_type, ++image_index, "left", image_id)
-                left_words, lines = extract_text_for_one_page(left_words, font, main_content_line_spacing, text_type)
-                add_text_type2(right_path, lines, font, main_content_line_spacing, article_type, ++image_index, "right", image_id)
+                left_words, left_lines = extract_text_for_one_page(words, font, main_content_line_spacing, text_type)
+                image_index += 1
+                add_text_type2(left_path, left_lines, font, main_content_line_spacing, article_type, image_index, "left", image_id)
+                left_words, right_lines = extract_text_for_one_page(left_words, font, main_content_line_spacing, text_type)
+                image_index += 1
+                add_text_type2(right_path, right_lines, font, main_content_line_spacing, article_type, image_index, "right", image_id)
                 words = left_words
         # 예측 후 생성하였는데 text가 남은경우 type1으로 생성
         while len(words) != 0:
             left_words, lines = extract_text_for_one_page(words, font, main_content_line_spacing, "type1")
+            save_path = resize_alpha_adjust_type1(image_path_list[len(image_path_list)-1], image_id)
+            image_index += 1
+            add_text_type1(save_path, lines, font, main_content_line_spacing, article_type, image_index, image_id)
             words = left_words
 
 
@@ -718,14 +659,19 @@ before_image_path1 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferr
 
 #resize_alpha_adjust_type2(before_image_path1, "34")
 
-left_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_left.png"
-right_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_right.png"
-font = ImageFont.truetype(font_path, main_content_font_size)
-text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다. 베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? , 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? , 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
-add_text_type2(right_path, text, font, main_content_line_spacing,  "Information", 2, "right", 34)
+# left_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_left.png"
+# right_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de_right.png"
+# font = ImageFont.truetype(font_path, main_content_font_size)
+image_list = []
 
-
-create_main_content()
+image_path1 = "../download_image/BARCELONA,_SPAIN_-_JUNE_23__Second_placed_Lando_Norris_of_Great_Britain_and_McLaren_smiles_with_his.jpg"
+image_path2 = "../download_image/barcelona-start-2023-1.png.jpg"
+image_path3 = "../download_image/Carlos_Sainz_and_Charles_Leclerc_of_Ferrari_fter_the_Formula_1_Spanish_Grand_Prix_at_Circuit_de.jpg.png"
+image_list.append(image_path1)
+image_list.append(image_path2)
+image_list.append(image_path3)
+text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다. 베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? , 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
+create_main_content(text,image_list,"Information",333)
 #adjust_text_by_textbox_size(text, font, main_content_line_spacing, (430, 1050))
 
 #start()
