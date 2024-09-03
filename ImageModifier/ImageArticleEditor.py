@@ -228,91 +228,6 @@ def resize_image_type2(image_path, image_id):
     resized_cropped_image.save(save_path)
     return save_path
 
-# def apply_alpha_gradient_to_image(image_path):
-#     """
-#         이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환합니다.
-#
-#         Parameters:
-#         - image: 처리할 1080x1350 이미지
-#
-#         Returns:
-#         - 그라데이션 처리가 된 1080x1350 이미지
-#         """
-#     image_name = os.path.splitext(os.path.basename(image_path))[0]
-#     image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-#
-#     h, w = image.shape[:2]
-#     assert h == 1350 and w == 1080, "입력 이미지 크기는 1080x1350이어야 합니다."
-#
-#     # 구간 설정
-#     first_start_height = 700
-#     first_end_height = 800
-#     second_start_height = 800
-#     second_end_height = 1150
-#     third_start_height = 1150
-#     third_end_height = 1250
-#     fourth_start_height = 1250
-#     fourth_end_height = 1350
-#
-#     first_gradient_height = first_end_height - first_start_height
-#     second_gradient_height = second_end_height - second_start_height
-#     third_gradient_height = third_end_height - third_start_height
-#     fourth_gradient_height = fourth_end_height - fourth_start_height
-#
-#     # 첫 번째 그라데이션 알파 값
-#     alpha1 = np.linspace(1, 0.3, first_gradient_height).reshape(-1, 1)
-#     alpha1 = np.repeat(alpha1, w, axis=1)
-#     alpha1 = np.stack([alpha1] * 3, axis=2)  # RGB 채널 적용
-#
-#     # 두 번째 그라데이션 알파 값
-#     alpha2 = np.linspace(0.3, 0.2, second_gradient_height).reshape(-1, 1)
-#     alpha2 = np.repeat(alpha2, w, axis=1)
-#     alpha2 = np.stack([alpha2] * 3, axis=2)  # RGB 채널 적용
-#
-#     # 세 번째 그라데이션 알파 값
-#     alpha3 = np.linspace(0.2, 0.1, third_gradient_height).reshape(-1, 1)
-#     alpha3 = np.repeat(alpha3, w, axis=1)
-#     alpha3 = np.stack([alpha3] * 3, axis=2)  # RGB 채널 적용
-#
-#     # 네 번째 구간 알파 값
-#     alpha4 = np.linspace(0.1, 0, third_gradient_height).reshape(-1, 1)
-#     alpha4 = np.repeat(alpha4, w, axis=1)
-#     alpha4 = np.stack([alpha4] * 3, axis=2)  # RGB 채널 적용
-#
-#     # 검정색 배경 생성
-#     black_background = np.zeros((h, w, 3), dtype=np.uint8)
-#
-#     result_image = image.copy()
-#
-#     # 원본 이미지의 첫 번째 하단 부분을 알파 블렌딩
-#     result_image[first_start_height:first_end_height] = (
-#             image[first_start_height:first_end_height] * alpha1 + black_background[
-#                                                                   first_start_height:first_end_height] * (1 - alpha1)
-#     ).astype(np.uint8)
-#
-#     # 원본 이미지의 두 번째 하단 부분을 알파 블렌딩
-#     result_image[second_start_height:second_end_height] = (
-#             image[second_start_height:second_end_height] * alpha2 + black_background[
-#                                                                     second_start_height:second_end_height] * (
-#                     1 - alpha2)
-#     ).astype(np.uint8)
-#
-#     # 원본 이미지의 세 번째 하단 부분을 알파 블렌딩
-#     result_image[third_start_height:third_end_height] = (
-#             image[third_start_height:third_end_height] * alpha3 + black_background[
-#                                                                   third_start_height:third_end_height] * (1 - alpha3)
-#     ).astype(np.uint8)
-#
-#     # 원본 이미지의 네 번째 하단 부분을 알파 블렌딩 (0으로 유지)
-#     result_image[fourth_start_height:fourth_end_height] = (
-#             image[fourth_start_height:fourth_end_height] * alpha4 + black_background[
-#                                                                     fourth_start_height:fourth_end_height] * (
-#                     1 - alpha4)
-#     ).astype(np.uint8)
-#     # 결과 저장
-#     cv2.imwrite(prefix_after_processing_path + image_name + ".png", result_image)
-#     return result_image
-
 def apply_alpha_gradient_type1(image_path, image_id):
     """
     이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
@@ -467,8 +382,8 @@ def split_apply_alpha_gradient_type2(image_path, image_id):
     right_image.save(right_save_path)
     return left_save_path, right_save_path
 
-
-def split_text_for_one_page(text, font, line_spacing):
+# type1으로만 페이지 생성하기
+def split_text_type1(text, font, line_spacing):
     """
         전체 text를 max_width, max_height 기반으로 나누기
     """
@@ -499,7 +414,6 @@ def extract_text_for_one_page(words, font, line_spacing, textbox_type):
         한 페이지에 들어가는 텍스트와 남은 words들
     """
     lines = []
-    pages = []
     if textbox_type == "type1":
         max_width = 900
         max_height = 370
@@ -516,7 +430,8 @@ def extract_text_for_one_page(words, font, line_spacing, textbox_type):
         lines.append(line.strip())
     return words, lines
 
-def calculate_type(text, image_count):
+# 이미지 갯수와 텍스트박스 사이즈를 기반으로 사용할 type1 or type2 예측
+def predict_type_mix(text, image_count):
     # type1으로 모두 만들수 있는 경우
     text_length = len(text)
     text_type_list = []
@@ -529,15 +444,14 @@ def calculate_type(text, image_count):
         for _ in range(image_count-1):
             if current_sum + type2_text_length * 2 > text_length:
                 break
-            text_type_list.append(2)
+            text_type_list.append("type2")
             # type2는 1번사용시 이미지 2개가 생성되므로 * 2
             current_sum += type2_text_length * 2
         while current_sum < text_length and len(text_type_list) < image_count:
-            text_type_list.append(1)
+            text_type_list.append("type1")
             current_sum += type1_text_length
     print(text_type_list)
     return text_type_list
-
 
 # 타이틀 이미지를 만드는 경우 text가 너무 긴 경우 font size 조정 해서 무조건 1페이지 안에 넣어야함
 def adjust_text_by_textbox_size(text, font, line_spacing, max_size, text_type):
@@ -576,7 +490,9 @@ def add_text_to_image(image, text, position, font, box_size, text_color, line_sp
 
 def resize_alpha_adjust_type1(image_path, image_id):
     processing1_image_path = resize_image_type1(image_path, image_id)
-    apply_alpha_gradient_type1(processing1_image_path, image_id)
+    save_path = apply_alpha_gradient_type1(processing1_image_path, image_id)
+    return save_path
+
 
 def resize_alpha_adjust_type2(image_path, image_id):
     processing1_image_path = resize_image_type2(image_path, image_id)
@@ -626,7 +542,7 @@ def add_text_type1(image_path, lines, font, line_spacing, article_type, index, i
     output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".png")
     result_image.save(output_path)
 
-def add_text_type2(image_path, text, font, line_spacing, article_type, index, left_or_right, image_id):
+def add_text_type2(image_path, lines, font, line_spacing, article_type, index, left_or_right, image_id):
     """
         이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
     """
@@ -653,18 +569,18 @@ def add_text_type2(image_path, text, font, line_spacing, article_type, index, le
     x, y = position
     #draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
 
-    lines = []
-    words = text.split(' ')
-    while words:
-        line = ''
-        while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
-            if (words[0].endswith(".")):
-                line = line + (words.pop(0) + ' ')
-                break
-            line = line + (words.pop(0) + ' ')
-        lines.append(line)
-        if (font.size + line_spacing) * (len(lines) + 1) >= max_height:
-            break
+    #lines = []
+    # words = text.split(' ')
+    # while words:
+    #     line = ''
+    #     while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
+    #         if (words[0].endswith(".")):
+    #             line = line + (words.pop(0) + ' ')
+    #             break
+    #         line = line + (words.pop(0) + ' ')
+    #     lines.append(line)
+    #     if (font.size + line_spacing) * (len(lines) + 1) >= max_height:
+    #         break
 
     for line in lines:
         if left_or_right == "left":
@@ -716,7 +632,8 @@ def create_title_image(image_path, title, sub_title, article_type):
         print("타이틀 이미지 저장 성공")
 
 
-def divide_image_index(need_page_count, image_count):
+# type1사용으로 페이지 갯수를 미리 계산한 경우 사용할 이미지 선택
+def select_type1_image_index(need_page_count, image_count):
     """
     페이지 갯수와 이미지 갯수가 맞지 않는 경우 페이지별로 사용할 이미지 정하기
     페이지 갯수를 이미지 갯수로 나눈 몫만큼 나눈뒤 남은 페이지만큼 앞번호부터 이미지 중복 사용
@@ -733,20 +650,23 @@ def divide_image_index(need_page_count, image_count):
     return select_image_index_list
 
 
-### 여기서 다시 시작
-def create_content_image_with_text(article_type, divided_text_list, font, image_path_list, select_image_index_list):
+#type1 으로만 만들기
+def create_main_image_only_type1(article_type, divided_text_list, font, image_path_list, select_image_index_list, image_id):
     text_num = 0
     for index, image_usage_count in enumerate(select_image_index_list):
         image_path = image_path_list[index]
         for i in range(image_usage_count):
             text = divided_text_list[text_num]
-            add_text_type1(image_path, text, font, main_content_line_spacing, article_type, index)
+            resize_image_path = resize_image_type1(image_path, image_id)
+            add_text_type1(resize_image_path, text, font, main_content_line_spacing, article_type, index)
             text_num += 1
 
-def start(text, image_path_list, article_type):
+def create_main_content(text, image_path_list, article_type, image_id, only_type1=None):
     """
     주어진 사진 갯수와 컨텐츠 내용을 기반으로 이미지 생성
     Args:
+        image_id:
+        only_type1:
         text:
         image_path_list:
         article_type:
@@ -754,13 +674,38 @@ def start(text, image_path_list, article_type):
     Returns:
 
     """
-    font = ImageFont.truetype(font_path, main_content_font_size)
 
-    divided_text_list = split_text_for_one_page(text, font, main_content_line_spacing)
-    need_page_count = len(divided_text_list)
+    font = ImageFont.truetype(font_path, main_content_font_size)
+    # type1으로만 생성
     image_count = len(image_path_list)
-    select_image_count_list = divide_image_index(need_page_count, image_count)
-    create_content_image_with_text(article_type, divided_text_list, font, image_path_list, select_image_count_list)
+    if only_type1:
+        divided_type1_pages = split_text_type1(text, font, main_content_line_spacing)
+        need_page_count = len(divided_type1_pages)
+        select_image_count_list = select_type1_image_index(need_page_count, image_count)
+        create_main_image_only_type1(article_type, divided_type1_pages, font, image_path_list, select_image_count_list, image_id)
+    else:
+        # type2 계산
+        text_type_list = predict_type_mix(text, image_count)
+        words = text.split(' ')
+        image_index = 0
+        for index, text_type in enumerate(text_type_list):
+            if text_type == "type1" and len(words) != 0:
+                left_words, lines = extract_text_for_one_page(words, font, main_content_line_spacing, text_type)
+                save_path = resize_alpha_adjust_type1(image_path_list[index], image_id)
+                add_text_type1(save_path, lines, font, main_content_line_spacing, article_type, ++image_index, image_id)
+                words = left_words
+            elif text_type == "type2" and len(words) != 0:
+                left_path, right_path = resize_alpha_adjust_type2(image_path_list[index], image_id)
+                left_words, lines = extract_text_for_one_page(words, font, main_content_line_spacing, text_type)
+                add_text_type2(left_path, lines, font, main_content_line_spacing, article_type, ++image_index, "left", image_id)
+                left_words, lines = extract_text_for_one_page(left_words, font, main_content_line_spacing, text_type)
+                add_text_type2(right_path, lines, font, main_content_line_spacing, article_type, ++image_index, "right", image_id)
+                words = left_words
+        # 예측 후 생성하였는데 text가 남은경우 type1으로 생성
+        while len(words) != 0:
+            left_words, lines = extract_text_for_one_page(words, font, main_content_line_spacing, "type1")
+            words = left_words
+
 
     # for index, lines_for_one_page in enumerate(divided_text_list):
     #     image_index = select_image_count_list[index]
@@ -778,8 +723,9 @@ right_path = "../after_processing_image/34/Carlos_Sainz_and_Charles_Leclerc_of_F
 font = ImageFont.truetype(font_path, main_content_font_size)
 text ="막스 베르스타펜은 F1 역사상 가장 많은 연속 폴 포지셔닝 기록을 갱신하고자 했습니다. 그러나 베르스타펜의 RB20 차는 모나코 서킷에서의 불안정한 밸런스로 인해 어려움을 겪었습니다. 연습 세션에서 연속적으로 주행 및 밸런스 문제를 보고한 베르스타펜은 최종 예선 라운드에서 예상을 뛰어넘는 성과를 보였습니다. 하지만 세인트 데보트 코너를 탈출하는 과정에서 벽에 부딪히며 6위로 예선을 마무리했습니다. 베르스타펜은 '차를 커브에 올리기 힘들어 시간 손실이 크다'고 말했는데요, 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? , 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? , 중고속 구간에서는 편안함을 느꼈지만 저속 구간에서 시간 손실이 컸다고 덧붙였습니다. 일요일 레이스에서 78랩의 경주를 치르며 drama를 대비할 계획이라고 밝혔습니다. 베르스타펜은 '모든 차들이 조금씩 여유를 가질 것'이라며 '기적을 기대하지 않는다'고 말했습니다. 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요? 베르스타펜의 모나코 대첩에 대해 여러분은 어떻게 생각하시나요?"
 add_text_type2(right_path, text, font, main_content_line_spacing,  "Information", 2, "right", 34)
-calculate_type(text, 3)
 
+
+create_main_content()
 #adjust_text_by_textbox_size(text, font, main_content_line_spacing, (430, 1050))
 
 #start()
