@@ -56,13 +56,7 @@ class F1PageCrawler:
             'user-metadata': '{"subscriptionSource":"","userRegistrationLevel":"full","subscribedProduct":"","subscriptionExpiry":"99/99/9999"}'
         }
 
-    def main_page_crawling(self, page_num):
-        target_url = mainPageUrl + str(page_num)
-        main_page_html = re.get(target_url, headers=self.header).text
-        bs4_page = BeautifulSoup(main_page_html, 'html.parser')
-        article_list = bs4_page.find("ul", {"id": "article-list"})
-        basic_article_info_list = self.extract_basic_article_info(article_list)
-        self.extract_article_content(basic_article_info_list)
+
 
     # 기본 href, 기사 타입, 제목 추출 반환
     def extract_basic_article_info(self, article_list):
@@ -138,8 +132,18 @@ class F1PageCrawler:
         else:
             print(f"Failed to retrieve image. Status code: {response.status_code}")
 
+    def start(self, page_num):
+        target_url = mainPageUrl + str(page_num)
+        main_page_html = re.get(target_url, headers=self.header).text
+        bs4_page = BeautifulSoup(main_page_html, 'html.parser')
+        article_list = bs4_page.find("ul", {"id": "article-list"})
+        basic_article_info_list = self.extract_basic_article_info(article_list)
+        self.extract_article_content(basic_article_info_list)
+
 with open('db_info.json', 'r') as file:
     db_info_json = json.load(file)
 
 crawler = F1PageCrawler(db_info_json)
-crawler.main_page_crawling(1)
+
+for i in range(1):
+    crawler.start(i)
