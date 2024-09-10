@@ -567,7 +567,7 @@ def create_title_image(image_path, title, sub_title, article_type):
         print("타이틀 이미지 저장 성공")
 
 
-# type1사용으로 페이지 갯수를 미리 계산한 경우 사용할 이미지 선택
+# type1 textbox size로 페이지 갯수를 미리 계산할 경우 사용할 이미지 선택
 def select_type1_image_index(need_page_count, image_count):
     """
     페이지 갯수와 이미지 갯수가 맞지 않는 경우 페이지별로 사용할 이미지 정하기
