@@ -1,7 +1,7 @@
 import requests as re
 from bs4 import BeautifulSoup
 import re as regex
-import f1Db
+from Db import f1Db
 import json
 
 mainPageUrl = "https://www.formula1.com/en/latest/all?articleFilters=&page="
@@ -21,7 +21,7 @@ class BasicArticleInfo:
 class F1PageCrawler:
 
     def __init__(self, db_info):
-        self.database = f1Db.Database(db_info_json['article_data_source'])
+        self.database = f1Db.Database(db_info_json)
         self.header = {
             '_scid': '2fec4d4c-acb5-4c9a-ab8d-0d7ef93ad926',
             '_cb': 'ByHKf7BTh2wJDUG93t',
@@ -140,10 +140,11 @@ class F1PageCrawler:
         basic_article_info_list = self.extract_basic_article_info(article_list)
         self.extract_article_content(basic_article_info_list)
 
-with open('db_info.json', 'r') as file:
+with open('../Db/db_info.json', 'r') as file:
     db_info_json = json.load(file)
 
-crawler = F1PageCrawler(db_info_json)
+mysql_db = db_info_json['article_data_source']
+crawler = F1PageCrawler(mysql_db)
 
 for i in range(1):
     crawler.start(i)

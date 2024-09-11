@@ -31,10 +31,10 @@ class Database:
             db=db_info['db'],
             charset='utf8mb4',
         )
-        self.cursor = self.db.cursor()
+        self.cursor = self.db.cursor(pymysql.cursors.DictCursor)
         self.table = db_info.get('table', "")
 
-    def execute(self, query, args={}):
+    def execute(self, query, args=None):
         self.cursor.execute(query, args)
 
     def save_basic_article(self, basic_article_info):
@@ -48,8 +48,6 @@ class Database:
         values = (img_source, img_name, image_description, article_id)
         self.cursor.execute(query, values)
         self.commit()
-
-
 
     def commit(self):
         self.db.commit()
