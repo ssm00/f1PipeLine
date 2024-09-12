@@ -38,13 +38,13 @@ class Database:
         self.cursor.execute(query, args)
 
     def save_basic_article(self, basic_article_info):
-        query = f"""INSERT INTO {self.table} (article_id, original_title, original_content, href, article_type) VALUES (%s,%s,%s,%s,%s)"""
+        query = f"""INSERT IGNORE INTO {self.table} (article_id, original_title, original_content, href, article_type) VALUES (%s,%s,%s,%s,%s)"""
         values = (basic_article_info.article_id, basic_article_info.original_title, basic_article_info.original_content, basic_article_info.href, basic_article_info.article_type)
         self.cursor.execute(query, values)
         self.commit()
 
     def save_article_image_info(self, article_id, img_source, img_name, image_description):
-        query = f"""INSERT INTO image (image_source, image_name, image_description, article_id) VALUES (%s,%s,%s,%s)"""
+        query = f"""INSERT IGNORE INTO image (image_source, image_name, image_description, article_id) VALUES (%s,%s,%s,%s)"""
         values = (img_source, img_name, image_description, article_id)
         self.cursor.execute(query, values)
         self.commit()
