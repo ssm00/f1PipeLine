@@ -1,7 +1,7 @@
 import os
 import sys
 import pymysql
-import json
+from datetime import datetime
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
 
 
@@ -38,8 +38,8 @@ class Database:
         self.cursor.execute(query, args)
 
     def save_basic_article(self, basic_article_info):
-        query = f"""INSERT IGNORE INTO {self.table} (article_id, original_title, original_content, href, article_type) VALUES (%s,%s,%s,%s,%s)"""
-        values = (basic_article_info.article_id, basic_article_info.original_title, basic_article_info.original_content, basic_article_info.href, basic_article_info.article_type)
+        query = f"""INSERT IGNORE INTO {self.table} (article_id, original_title, original_content, href, article_type, created_at) VALUES (%s,%s,%s,%s,%s,%s)"""
+        values = (basic_article_info.article_id, basic_article_info.original_title, basic_article_info.original_content, basic_article_info.href, basic_article_info.article_type, datetime.now().strftime("%y-%m-%d %H:%M:S"))
         self.cursor.execute(query, values)
         self.commit()
 
