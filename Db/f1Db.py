@@ -49,6 +49,10 @@ class Database:
         self.cursor.execute(query, values)
         self.commit()
 
+    def fetch_all(self, query, args=None):
+        self.cursor.execute(query, args)
+        return self.cursor.fetchall()
+
     def commit(self):
         self.db.commit()
 
