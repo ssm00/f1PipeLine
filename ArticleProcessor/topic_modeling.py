@@ -1,16 +1,25 @@
 from Db import f1Db
-import tqdm
+from tqdm import tqdm
 import json
 import string
 import nltk
+import time
+
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
-import gensim
 from gensim import corpora
 from gensim.models.coherencemodel import CoherenceModel
+from gensim.models.ldamodel import LdaModel
 import matplotlib.pyplot as plt
+import pyLDAvis
+import pyLDAvis.gensim
+from datetime import datetime
+
+
+from multiprocessing import Process, freeze_support
+
 
 with open('../Db/db_info.json', 'r') as file:
     db_info_json = json.load(file)
@@ -67,6 +76,7 @@ def update_bow(db_info):
     database.commit()
 
 def get_all_bow(db_info):
+    start = time.time()
     database = f1Db.Database(db_info)
     select_all_bow = "select bow from article where sequence = 2"
     bow_list = database.fetch_all(select_all_bow)
@@ -77,25 +87,30 @@ def get_all_bow(db_info):
 
     #corpora의 매개변수로는 문서의 각 단어를 담고 있는리스트를 담고있는 전체 리스트. 즉 문서마다 리스트로 분리 해야함, 하나의 리스트에 모든 단어 다넣으면 하나의 문서로 인식함
     dictionary = corpora.Dictionary(all_word_list)
-    corpus = [dictionary.doc2bow(doc) for doc in tqdm.tqdm(all_word_list)]
+    corpus = [dictionary.doc2bow(doc) for doc in tqdm(all_word_list)]
 
     #토픽모델링
     #NUM_TOPICS = 20  # 20개의 토픽, k=20
     #ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=NUM_TOPICS, id2word=dictionary, passes=15)
     #topics = ldamodel.print_topics(num_words=4)
     coherence_values = []
-    for i in range(2, 15):
-        ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=i, id2word=dictionary, passes=15)
-        coherence_model_lda = CoherenceModel(model=ldamodel, texts=all_word_list, dictionary=dictionary, topn=10)
+    model_list = []
+    for i in tqdm(range(2, 4)):
+        ldamodel = LdaModel(corpus, num_topics=i, id2word=dictionary)
+        model_list.append(ldamodel)
+        coherence_model_lda = CoherenceModel(model=ldamodel, texts=all_word_list, dictionary=dictionary, coherence='c_v')
         coherence_lda = coherence_model_lda.get_coherence()
         coherence_values.append(coherence_lda)
-    x = range(2, 15)
+    x = range(2, 4)
+    end = time.time()
     plt.plot(x, coherence_values)
     plt.xlabel("number of topics")
     plt.ylabel("coherence score")
     plt.show()
+    vis = pyLDAvis.gensim.prepare(ldamodel, corpus, dictionary, sort_topics=False)
+    pyLDAvis.save_html(vis, './lda.html')
+    print(f"{end - start:.5f} sec")
 
-
-#update_bow(mysql_db)
-get_all_bow(mysql_db)
-
+if __name__ == '__main__':
+  freeze_support()
+  Process(target=get_all_bow(mysql_db)).start()
