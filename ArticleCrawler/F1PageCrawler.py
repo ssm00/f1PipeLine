@@ -21,7 +21,7 @@ class BasicArticleInfo:
 class F1PageCrawler:
 
     def __init__(self, db_info):
-        self.database = f1Db.Database(db_info_json)
+        self.database = f1Db.Database(db_info)
         self.header = {
             '_scid': '2fec4d4c-acb5-4c9a-ab8d-0d7ef93ad926',
             '_cb': 'ByHKf7BTh2wJDUG93t',
@@ -55,8 +55,6 @@ class F1PageCrawler:
             'login-session': '{"data":{"subscriptionToken":"eyJraWQiOiIxIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJFeHRlcm5hbEF1dGhvcml6YXRpb25zQ29udGV4dERhdGEiOiJLT1IiLCJTdWJzY3JpcHRpb25TdGF0dXMiOiJpbmFjdGl2ZSIsIlN1YnNjcmliZXJJZCI6IjE5NjMzOTkxNSIsIkZpcnN0TmFtZSI6IiIsImVudHMiOlt7ImNvdW50cnkiOiJLT1IiLCJlbnQiOiJSRUcifV0sIkxhc3ROYW1lIjoiIiwiZXhwIjoxNzE4ODQxOTk3LCJTZXNzaW9uSWQiOiJleUpoYkdjaU9pSm9kSFJ3T2k4dmQzZDNMbmN6TG05eVp5OHlNREF4THpBMEwzaHRiR1J6YVdjdGJXOXlaU05vYldGakxYTm9ZVEkxTmlJc0luUjVjQ0k2SWtwWFZDSjkuZXlKaWRTSTZJakV3TURFeElpd2ljMmtpT2lJMk1HRTVZV1E0TkMxbE9UTmtMVFE0TUdZdE9EQmtOaTFoWmpNM05EazBaakpsTWpJaUxDSm9kSFJ3T2k4dmMyTm9aVzFoY3k1NGJXeHpiMkZ3TG05eVp5OTNjeTh5TURBMUx6QTFMMmxrWlc1MGFYUjVMMk5zWVdsdGN5OXVZVzFsYVdSbGJuUnBabWxsY2lJNklqRTVOak16T1RreE5TSXNJbWxrSWpvaU1UQTBPR1JoT0RZdFlUbGtaaTAwTW1Vd0xUbGlPV1F0TTJZM1pESmlaVFZsT1dJeElpd2lkQ0k2SWpFaUxDSnNJam9pWlc0dFIwSWlMQ0prWXlJNklqTTJORFFpTENKaFpXUWlPaUl5TURJMExUQTJMVE13VkRBd09qQTJPak0yTGprek5Wb2lMQ0prZENJNklqRWlMQ0psWkNJNklqSXdNalF0TURjdE1UWlVNREE2TURZNk16WXVPVE0xV2lJc0ltTmxaQ0k2SWpJd01qUXRNRFl0TVRkVU1EQTZNRFk2TXpZdU9UTTFXaUlzSW1sd0lqb2lNall3TkRvelpEQTVPamc1TjJRNlpUVXdNRHBtTVRVeU9tUXdabUk2WTJGa01EbzNZVGRtSWl3aVl5STZJa05CVEVkQlVsa2lMQ0p6ZENJNklrRkNJaXdpY0dNaU9pSlVNbG9nTVVvMklpd2lZMjhpT2lKRFFVNGlMQ0p1WW1ZaU9qRTNNVGcwT1RZek9UWXNJbVY0Y0NJNk1UY3lNVEE0T0RNNU5pd2lhWE56SWpvaVlYTmpaVzVrYjI0dWRIWWlMQ0poZFdRaU9pSmhjMk5sYm1SdmJpNTBkaUo5LmlSTi1oSHBCWmttZXRkNGxpMTh1bkpzZ2VwcFoxb0U4Q2dPXzNqX2FhZG8iLCJpYXQiOjE3MTg0OTYzOTcsIlN1YnNjcmliZWRQcm9kdWN0IjoiIiwianRpIjoiMmVhNDI0ZjQtMzkwYS00NTU2LWJiMmMtZmUyMGIwYjE1NDM5IiwiaGFzaGVkU3Vic2NyaWJlcklkIjoicHF6V2NIdmRnVVg5ZjNTQUhhTlYzYzZzOHIxWW9xS2M0YnV1VjVyOXlDND0ifQ.uI9QkMOdes1YQ6On_UhAIOqp-E5WU08krwrK6F6A7L2SheSg1wcDAV13voV7rGfiYF3wv69ZdhOei-aTIwrVp8JmYzlvRS08HANpYhwATRtig833xTeSqrMYqbJs7D8mJQl2knshM1mShL7ntyQzri7J302uv1bef5Sr-7ssBs4QSaT6nKWenPOM0Wm157oQj5XqaplQ7IMe5vQ_WMUbjaIkWLZ2MOWQKubq_Lzn4J_nqs5G97TVe6USaqCSUQ6y14YKg32nuUhgVGbk6Sv_ibRGRljKa_Gu8Zu5wPc94qqQTtpdg74iTDK7Gpy2XXnlcF1amXyWn5OIAdjyyJqqvg"}}',
             'user-metadata': '{"subscriptionSource":"","userRegistrationLevel":"full","subscribedProduct":"","subscriptionExpiry":"99/99/9999"}'
         }
-
-
 
     # 기본 href, 기사 타입, 제목 추출 반환
     def extract_basic_article_info(self, article_list):
@@ -117,7 +115,9 @@ class F1PageCrawler:
 
     def replace_invalid_chars(self, name):
         # 윈도우에서 허용되지 않는 문자: \ / : * ? " < > |
-        return regex.sub(r'[\\/:*?"<>|]', '_', name)
+        invalid_chars = r'[\\/*?:"<>|]'
+        sanitized_filename = re.sub(invalid_chars, '', name)
+        return sanitized_filename[:255]
 
     def replace_spaces_with_underscores(self, name):
         return regex.sub(r'\s+', '_', name)
@@ -146,5 +146,5 @@ with open('../Db/db_info.json', 'r') as file:
 mysql_db = db_info_json['article_data_source']
 crawler = F1PageCrawler(mysql_db)
 
-for i in range(1):
+for i in range(10):
     crawler.start(i)
