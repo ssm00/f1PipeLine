@@ -1,3 +1,5 @@
+import pickle
+
 from Db import f1Db
 from tqdm import tqdm
 import json
@@ -34,57 +36,58 @@ def download_nltk_package():
     nltk.download('averaged_perceptron_tagger_eng')
     nltk.download('punkt_tab')
 
-def update_bow(db_info):
-    database = f1Db.Database(db_info)
-    original_content_query = "select original_content from article where sequence = 2"
-    database.execute(query=original_content_query)
-    res = database.cursor.fetchall()
-    content = res[0].get('original_content')
 
+def exe_bow(content):
+    content = content.get('original_content')
     tokens = word_tokenize(content)
-
     # 구두점 + 추가적인 제거하고 싶은 특수문자들
-    additional_punctuations = set(string.punctuation) | {'“', '”', '’', "'", '"', '‘', "-","–"}  # 큰따옴표, 작은따옴표, 특수문자 등 추가
-
+    additional_punctuations = set(string.punctuation) | {'“', '”', '’', "'", '"', '‘', "-",
+                                                         "–"}  # 큰따옴표, 작은따옴표, 특수문자 등 추가
     # 구두점 제거
     tokens_without_punctuation = [word for word in tokens if word not in additional_punctuations]
-
     # 불용어 제거 (구두점 제거 후에 처리)
     en_stops = set(stopwords.words('english'))
     without_stopwords = [word for word in tokens_without_punctuation if word.lower() not in en_stops]
-
     # 표제어 추출
     lemmatizer = WordNetLemmatizer()
     without_lemma = [lemmatizer.lemmatize(token) for token in without_stopwords]
-    
     # 어간 추출
     stemmer = PorterStemmer()
     stemmed = [stemmer.stem(token) for token in tokens_without_punctuation]
-
     tag_list = nltk.pos_tag(without_lemma)
-
-    #nn, nnp, nns, nnps, vb, vbd,
-    need_tags = ["NN","NNP","NNS","NNPS","VB","VBD"]
+    # nn, nnp, nns, nnps, vb, vbd,
+    need_tags = ["NN", "NNP", "NNS", "NNPS", "VB", "VBD"]
     res_list = []
     for tag in tag_list:
         if tag[1] in need_tags:
             res_list.append(tag[0])
     res = ",".join(res_list)
-    query = "update article set bow = %s where sequence = %s"
-    values = res, 2
-    database.cursor.execute(query, values)
+    return res
+
+def update_bow(db_info):
+    database = f1Db.Database(db_info)
+    original_content_query = "select sequence, original_content from article where Date(created_at) = %s"
+    today = datetime.now().date()
+    content_list = database.fetch_all(original_content_query, today)
+    for content in content_list:
+        query = "update article set bow = %s where sequence = %s"
+        bow = exe_bow(content)
+        values = (bow, content.get("sequence"))
+        database.cursor.execute(query, values)
     database.commit()
+
 
 def get_all_bow(db_info):
     start = time.time()
     database = f1Db.Database(db_info)
-    select_all_bow = "select bow from article where sequence = 2"
-    bow_list = database.fetch_all(select_all_bow)
+    select_all_bow = "select bow from article where Date(created_at) = %s"
+    today = datetime.now().date()
+    bow_list = database.fetch_all(select_all_bow, today)
     all_word_list = []
     for bow in bow_list:
         bow = bow.get("bow")
         all_word_list.append(bow.split(","))
-
+    print(len(all_word_list))
     #corpora의 매개변수로는 문서의 각 단어를 담고 있는리스트를 담고있는 전체 리스트. 즉 문서마다 리스트로 분리 해야함, 하나의 리스트에 모든 단어 다넣으면 하나의 문서로 인식함
     dictionary = corpora.Dictionary(all_word_list)
     corpus = [dictionary.doc2bow(doc) for doc in tqdm(all_word_list)]
@@ -95,22 +98,31 @@ def get_all_bow(db_info):
     #topics = ldamodel.print_topics(num_words=4)
     coherence_values = []
     model_list = []
-    for i in tqdm(range(2, 4)):
-        ldamodel = LdaModel(corpus, num_topics=i, id2word=dictionary)
+    for i in tqdm(range(2, 20, 2)):
+        # passes : 최대 반복 횟수
+        ldamodel = LdaModel(corpus, num_topics=i, id2word=dictionary, passes=5)
         model_list.append(ldamodel)
         coherence_model_lda = CoherenceModel(model=ldamodel, texts=all_word_list, dictionary=dictionary, coherence='c_v')
         coherence_lda = coherence_model_lda.get_coherence()
         coherence_values.append(coherence_lda)
-    x = range(2, 4)
+    x = range(2, 20, 2)
+    best_model_index = coherence_values.index(max(coherence_values))
+    print(best_model_index)
+    best_model = model_list[best_model_index]
     end = time.time()
     plt.plot(x, coherence_values)
     plt.xlabel("number of topics")
     plt.ylabel("coherence score")
     plt.show()
-    vis = pyLDAvis.gensim.prepare(ldamodel, corpus, dictionary, sort_topics=False)
+    vis = pyLDAvis.gensim.prepare(best_model, corpus, dictionary, sort_topics=False)
     pyLDAvis.save_html(vis, './lda.html')
     print(f"{end - start:.5f} sec")
+    pickle.dump(corpus, open('../data/lda/lda_corpus.pkl', 'wb'))
+    dictionary.save('./data/lda/lda_dictionary.gensim')
+    best_model.save('./data/lda/lda_model.gensim')
+
 
 if __name__ == '__main__':
   freeze_support()
+  update_bow(mysql_db)
   Process(target=get_all_bow(mysql_db)).start()
