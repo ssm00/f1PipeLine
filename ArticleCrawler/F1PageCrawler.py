@@ -58,69 +58,76 @@ class F1PageCrawler:
 
     # 기본 href, 기사 타입, 제목 추출 반환
     def extract_basic_article_info(self, article_list):
-        article_info_list = []
-        for article in article_list:
-            href = article.find("a")['href']
-            article_type = article.find("a").find("figcaption").find("span").text
-            article_title = article.find("a").find("figcaption").find("p").text
-            pattern = r'\.([^.]+)$'
-            match = regex.search(pattern, href)
-            if match:
-                article_id = match.group(1)
-            else:
-                article_id = None
-            article_info_list.append(BasicArticleInfo(article_id, href, article_type, article_title))
-        return article_info_list
+        try:
+            article_info_list = []
+            for article in article_list:
+                href = article.find("a")['href']
+                article_type = article.find("a").find("figcaption").find("span").text
+                article_title = article.find("a").find("figcaption").find("p").text
+                pattern = r'\.([^.]+)$'
+                match = regex.search(pattern, href)
+                if match:
+                    article_id = match.group(1)
+                else:
+                    article_id = None
+                article_info_list.append(BasicArticleInfo(article_id, href, article_type, article_title))
+            return article_info_list
+        except Exception as e:
+            print(f"기사 기본 정보 및 href 크롤링 중 에러 발생 메시지는 : \n {e}")
+            return article_info_list
+
 
 
     def extract_article_content(self, basic_article_info_list):
-        for basic_article_info in basic_article_info_list:
+        try:
             print("START")
-            print(basic_article_info.href)
-            if basic_article_info.article_type == "News" or basic_article_info.article_type == "Technical" or basic_article_info.article_type == "Feature":
-                article_request = re.get(basic_article_info.href).text
-                article = BeautifulSoup(article_request, 'html.parser')
-                article_content_cluster = article.find('article',{"class":"col-span-6"})
-                photo_list = article_content_cluster.find_all("div", {"class": "f1-breakout"})
-                p_tag_list = article_content_cluster.find_all("p")
-                content = ""
-                # 아티클 중 p 태그
-                for p in p_tag_list:
-                    read_more = r'READ MORE'
-                    if regex.search(read_more, p.text):
-                        continue
-                    content += p.text + '\n'
-                basic_article_info.add_article_content(content)
-                self.database.save_basic_article(basic_article_info)
+            for basic_article_info in basic_article_info_list:
+                print(basic_article_info.href)
+                if basic_article_info.article_type == "News" or basic_article_info.article_type == "Technical" or basic_article_info.article_type == "Feature":
+                    article_request = re.get(basic_article_info.href).text
+                    article = BeautifulSoup(article_request, 'html.parser')
+                    article_content_cluster = article.find('article',{"class":"col-span-6"})
+                    photo_list = article_content_cluster.find_all("div", {"class": "f1-breakout"})
+                    p_tag_list = article_content_cluster.find_all("p")
+                    content = ""
+                    # 아티클 중 p 태그
+                    for p in p_tag_list:
+                        read_more = r'READ MORE'
+                        if regex.search(read_more, p.text):
+                            continue
+                        content += p.text + '\n'
+                    basic_article_info.add_article_content(content)
+                    self.database.save_basic_article(basic_article_info)
 
-                # 기사의 사진 저장 하기
-                for photo in photo_list:
-                    if photo.find("figure") is not None:
-                        img_source = photo.find("img")['src']
-                        img_name = photo.find("img")['alt']
-                        img_name = self.replace_invalid_chars(img_name)
-                        img_name = self.replace_spaces_with_underscores(img_name)
-                        image_description = photo.find("figcaption").text
-                        self.img_download(img_source, img_name, "../download_image")
-                    elif photo.find("div",{"class","f1-carousel__slide"}) is not None:
-                        photo_slide = photo.find_all("div", {"class", "f1-carousel__slide"})
-                        for photo_in_slide in photo_slide:
-                            img_source = photo_in_slide.find("img")['src']
-                            img_name = photo_in_slide.find("img")['alt']
+                    # 기사의 사진 저장 하기
+                    for photo in photo_list:
+                        if photo.find("figure") is not None:
+                            img_source = photo.find("img")['src']
+                            img_name = photo.find("img")['alt']
                             img_name = self.replace_invalid_chars(img_name)
-                            img_name = self.replace_spaces_with_underscores(img_name)
-                            image_description = img_name
+                            if photo.find("figure") is None:
+                                image_description = img_name
+                            else:
+                                image_description = photo.find("figcaption").text
                             self.img_download(img_source, img_name, "../download_image")
-                    self.database.save_article_image_info(basic_article_info.article_id, img_source, img_name, image_description)
+                        elif photo.find("div",{"class","f1-carousel__slide"}) is not None:
+                            photo_slide = photo.find_all("div", {"class", "f1-carousel__slide"})
+                            for photo_in_slide in photo_slide:
+                                img_source = photo_in_slide.find("img")['src']
+                                img_name = photo_in_slide.find("img")['alt']
+                                img_name = self.replace_invalid_chars(img_name)
+                                image_description = img_name
+                                self.img_download(img_source, img_name, "../download_image")
+                        self.database.save_article_image_info(basic_article_info.article_id, img_source, img_name, image_description)
+        except Exception as e:
+            print(f"기사 세부 정보 크롤링 도중 에러 발생 메시지는 : \n{e}")
 
     def replace_invalid_chars(self, name):
         # 윈도우에서 허용되지 않는 문자: \ / : * ? " < > |
         invalid_chars = r'[\\/*?:"<>|]'
-        sanitized_filename = re.sub(invalid_chars, '', name)
-        return sanitized_filename[:255]
-
-    def replace_spaces_with_underscores(self, name):
-        return regex.sub(r'\s+', '_', name)
+        sanitized_filename = regex.sub(invalid_chars, '', name)
+        sanitized_filename = regex.sub(r'\s+', '_', sanitized_filename)
+        return sanitized_filename[:200]
 
     def img_download(self, img_source, img_name, save_path):
         response = re.get(img_source)
