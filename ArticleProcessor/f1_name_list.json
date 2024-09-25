@@ -1,0 +1,40 @@
+{
+  "people": {
+    "driver": [
+      "Max Verstappen",
+      "Lando Norris",
+      "Charles Leclerc",
+      "Oscar Piastri",
+      "Carlos Sainz",
+      "Lewis Hamilton",
+      "George Russell",
+      "Sergio Perez",
+      "Fernando Alonso",
+      "Nico Hulkenberg",
+      "Lance Stroll",
+      "Yuki Tsunoda",
+      "Alex Albon",
+      "Daniel Ricciardo",
+      "Pierre Gasly",
+      "Esteban Ocon",
+      "Oliver Bearman",
+      "Kevin Magnussen",
+      "Franco Colapinto",
+      "Zhou Guanyu",
+      "Logan Sargeant",
+      "Valtteri Bottas"
+    ],
+    "director": [
+      "Horner"
+    ],
+    "engineer": [
+      "Adrian Newey",
+      "Mike Krack"
+    ],
+    "ceo": [
+      "Lawrence Stroll"
+    ]
+  },
+  "team": ["Red Bull Racing", "Mclaren", "Ferrari", "Mercedes", "Aston Martin", "Hass",
+    "Rb Visa Cash", "Williams", "Alpine", "Kick Sauber"]
+}
