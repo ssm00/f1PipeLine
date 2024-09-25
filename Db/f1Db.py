@@ -38,8 +38,8 @@ class Database:
         self.cursor.execute(query, args)
 
     def save_basic_article(self, basic_article_info):
-        query = f"""INSERT IGNORE INTO {self.table} (article_id, original_title, original_content, href, article_type, created_at) VALUES (%s,%s,%s,%s,%s,%s)"""
-        values = (basic_article_info.article_id, basic_article_info.original_title, basic_article_info.original_content, basic_article_info.href, basic_article_info.article_type, datetime.now().strftime("%y-%m-%d %H:%M:S"))
+        query = f"""INSERT IGNORE INTO {self.table} (article_id, original_title, original_content, href, article_type, published_at, collected_at) VALUES (%s,%s,%s,%s,%s,%s,%s)"""
+        values = (basic_article_info.article_id, basic_article_info.original_title, basic_article_info.original_content, basic_article_info.href, basic_article_info.article_type, basic_article_info.published_at, datetime.now().strftime("%y-%m-%d %H:%M:S"))
         self.cursor.execute(query, values)
         self.commit()
 
