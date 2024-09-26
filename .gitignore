@@ -2,7 +2,7 @@
 key.json
 prompt.json
 db_info.json
-account_info.json
+MyMetaData/account_info.json
 *.jpg
 __pycache__/
 *.png
