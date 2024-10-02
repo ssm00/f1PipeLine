@@ -28,8 +28,8 @@ class BasicArticleInfo:
 
 class F1PageCrawler:
 
-    def __init__(self, db_info, download_prefix_path):
-        self.database = f1Db.Database(db_info)
+    def __init__(self, database, download_prefix_path):
+        self.database = database
         self.main_page_url = "https://www.formula1.com/en/latest/all?articleFilters=&page="
         self.download_prefix_path = download_prefix_path
         self.header = {
