@@ -3,7 +3,8 @@ import sys
 import pymysql
 from datetime import datetime
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
-
+from datetime import datetime
+from datetime import timedelta
 
 class LoginInfo:
     def __init__(self, loginid, password, sequence):
@@ -48,6 +49,14 @@ class Database:
         values = (img_source, img_name, image_description, article_id)
         self.cursor.execute(query, values)
         self.commit()
+
+    def get_one_article(self, date_range):
+        now = datetime.now()
+        start_date = now - timedelta(days=date_range - 1)
+        end_date = now + timedelta(days=1)
+        get_one_article_query = "select * from article where published_at between Date(%s) and Date(%s)"
+        values = (start_date, end_date)
+        return self.cursor.fetchone(get_one_article_query, values)
 
     def fetch_all(self, query, args=None):
         self.cursor.execute(query, args)
