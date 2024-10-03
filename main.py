@@ -49,18 +49,24 @@ class F1Main:
         self.test_crawling()
 
         #get one
-        article = database.get_one_article(crawler_properties_json.get("total_crawling_date_from_today"))
+        result = database.get_one_article(crawler_properties_json.get("total_crawling_date_from_today"))
 
         #translator
         prompt_v1 = prompt_json['prompt_v1']
         key = key_json['api_key']
         article_translator = ArticleTranslator(prompt_v1, key)
 
+        seq = result[0]
+        title = result[1]
+        original_content = result[2]
+        article_type = result[3]
 
-        article_translator.translate_v1(content)
+        processing_data = article_translator.translate_v1(original_content)
+        print(processing_data)
+        print("==================================")
+        processing_data = json.loads(processing_data)
+        print(processing_data)
 
-        get_article_id =
-        article_images =
 
 
     # def v2():
@@ -87,8 +93,5 @@ if __name__ == '__main__':
     freeze_support()
     database = f1Db(mysql_db)
     main = F1Main(database)
+    main.v1()
 
-#     f1_crawler = F1PageCrawler(mysql_db)
-#     f1_crawler.start(1)
-#     f1_crawler.start(2)
-#     f1_crawler.start(3)
