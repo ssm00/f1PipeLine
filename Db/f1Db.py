@@ -21,6 +21,17 @@ class LoginInfo:
     def get_sequence(self):
         return self.sequence
 
+class Article:
+    def __init__(self,seq,article_id,original_title,original_content,href,article_type,published_at,collected_at):
+        self.seq = seq
+        self.article_id = article_id
+        self.original_title = original_title
+        self.original_content = original_content
+        self.href = href
+        self.article_type = article_type
+        self.published_at = published_at
+        self.collected_at = collected_at
+
 
 class Database:
     def __init__(self, db_info):
@@ -54,13 +65,23 @@ class Database:
         now = datetime.now()
         start_date = now - timedelta(days=date_range - 1)
         end_date = now + timedelta(days=1)
-        get_one_article_query = "select * from article where published_at between Date(%s) and Date(%s)"
+        get_one_article_query = "select sequence, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s)"
         values = (start_date, end_date)
-        return self.cursor.fetchone(get_one_article_query, values)
+        return self.fetch_one(get_one_article_query, values)
+
+    def update_translate_content(self, sequence, translate_content):
+        update_query = "update article set translate_content = (%s) where sequence = (%s)"
+        values = (translate_content, sequence)
+        self.cursor.execute(update_query, values)
+        self.commit()
 
     def fetch_all(self, query, args=None):
         self.cursor.execute(query, args)
         return self.cursor.fetchall()
+
+    def fetch_one(self, query, args=None):
+        self.cursor.execute(query, args)
+        return self.cursor.fetchone()
 
     def commit(self):
         self.db.commit()
