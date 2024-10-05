@@ -65,15 +65,23 @@ class Database:
         now = datetime.now()
         start_date = now - timedelta(days=date_range - 1)
         end_date = now + timedelta(days=1)
-        get_one_article_query = "select sequence, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s)"
+        get_one_article_query = "select sequence, article_id, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s) order by sequence desc"
         values = (start_date, end_date)
         return self.fetch_one(get_one_article_query, values)
+
+    def get_images_by_article_id(self, article_id):
+        select_query = "select image_name, image_description from image where article_id = (%s)"
+        return self.fetch_all(select_query, article_id)
 
     def update_translate_content(self, sequence, translate_content):
         update_query = "update article set translate_content = (%s) where sequence = (%s)"
         values = (translate_content, sequence)
         self.cursor.execute(update_query, values)
         self.commit()
+
+    def get_translate_content(self, sequence):
+        select_query = "select translate_content from article where sequence = (%s)"
+        return self.fetch_one(select_query, sequence)
 
     def fetch_all(self, query, args=None):
         self.cursor.execute(query, args)
