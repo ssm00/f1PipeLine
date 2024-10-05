@@ -1,0 +1,18 @@
+{
+    "prefix_after_processing_path": "./after_processing_image/",
+    "image_source_path": "./download_image/",
+    "font_path" : "./prefab/Cafe24Ohsquare-v2.0/Cafe24Ohsquare-v2.0.ttf",
+    "breaking_color" : "#FB0045",
+    "information_color" : "#F38A4A",
+    "official_color": "#c6ff02",
+    "tech_color": "#4AB2F3",
+    "rumor_color": "#f4e04b",
+    "godic_font": "./prefab/Noto_Sans_KR/static/NotoSansKR-Bold.ttf",
+    "main_content_line_spacing": 15,
+    "main_content_font_size": 40,
+    "type2_size": "(2160, 1350)",
+    "type1_text_length": 160,
+    "type2_text_length": 220,
+    "type1_textbox_size" : "(900, 370)",
+    "type2_textbox_size" : "(430, 1050)"
+}
