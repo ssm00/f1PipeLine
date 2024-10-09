@@ -61,13 +61,21 @@ class Database:
         self.cursor.execute(query, values)
         self.commit()
 
-    def get_one_article(self, date_range):
+    def get_one_article_by_date_range(self, date_range):
         now = datetime.now()
         start_date = now - timedelta(days=date_range - 1)
         end_date = now + timedelta(days=1)
-        get_one_article_query = "select sequence, article_id, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s) order by sequence desc"
+        get_one_article_query = "select sequence, article_id, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s) order by sequence desc and translate_content is null"
         values = (start_date, end_date)
         return self.fetch_one(get_one_article_query, values)
+
+    def get_all_article_by_date_range(self, date_range):
+        now = datetime.now()
+        start_date = now - timedelta(days=date_range - 1)
+        end_date = now + timedelta(days=1)
+        get_one_article_query = "select sequence, article_id, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s) order by sequence desc and translate_content is null"
+        values = (start_date, end_date)
+        return self.fetch_all(get_one_article_query, values)
 
     def get_images_by_article_id(self, article_id):
         select_query = "select image_name, image_description from image where article_id = (%s)"

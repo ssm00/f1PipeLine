@@ -88,6 +88,7 @@ class ImageGenerator:
         elif article_type == "Rumor":
             icon_path = './prefab/rumor_icon.png'
             line_path = './prefab/rumor_line_440.png'
+        logo_path = './prefab/logo.png'
 
         icon_position = (50, 700)  # (x, y)
         line_position = (50, 780)  # (x, y)
@@ -156,6 +157,7 @@ class ImageGenerator:
         else:
             raise CustomException.SizeNotFitType2(image.size)
 
+        self.add_icon_to_image(resized_cropped_image, "./prefab/logo.png", (500, 1270))
         save_dir = os.path.join(self.prefix_after_processing_path, str(image_id))
         os.makedirs(save_dir, exist_ok=True)
         save_path = os.path.join(save_dir, image_name + ".png")
@@ -220,6 +222,7 @@ class ImageGenerator:
         blend_image_section(result_image, alpha3, third_start_height, third_end_height)
         blend_image_section(result_image, alpha4, fourth_start_height, fourth_end_height)
 
+        self.add_icon_to_image(result_image, "./prefab/logo.png",(500,1270))
         save_dir = os.path.join(self.prefix_after_processing_path, str(image_id))
         save_path = os.path.join(save_dir, image_name + ".png")
         result_image.save(save_path)
@@ -376,7 +379,7 @@ class ImageGenerator:
                 text_type_list.append("type1")
         else:
             current_sum = 0
-            #마지막은 무조건 타입 1로 하기 타입1은 중복 사진 생성 괜찮으나 타입 2 사진 중복 생성 막아둠(이상할듯)
+            #마지막은 무조건 타입 1로 하기, 타입1은 중복 사진 생성 괜찮으나 타입 2 사진 중복 생성 막아둠(이상할듯)
             for _ in range(image_count-1):
                 if current_sum + self.type2_text_length * 2 > text_length:
                     break
