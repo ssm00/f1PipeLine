@@ -26,7 +26,7 @@ class ImageGenerator:
 
     def select_article_line(self, article_type, line_type):
         if line_type == "type1":
-            if article_type == "Information":
+            if article_type == "Information" or article_type == "News" or article_type == "Feature":
                 line_path = './prefab/information_line_440.png'
             elif article_type == "Breaking":
                 line_path = './prefab/breaking_line_440.png'
@@ -37,7 +37,7 @@ class ImageGenerator:
             elif article_type == "Rumor":
                 line_path = './prefab/rumor_line_440.png'
         elif line_type == "type2":
-            if article_type == "Information":
+            if article_type == "Information" or article_type == "News" or article_type == "Feature":
                 line_path = './prefab/information_line_1050.png'
             elif article_type == "Breaking":
                 line_path = './prefab/breaking_line_1050.png'
@@ -73,7 +73,7 @@ class ImageGenerator:
     # article_type은 Information, Breaking, Official, Tech, Rumor 다섯가지
     def add_title_icon_to_image(self, image_path, article_type):
         image_name = os.path.splitext(os.path.basename(image_path))[0]
-        if article_type == "Information" or article_type == "News":
+        if article_type == "Information" or article_type == "News" or article_type == "Feature":
             icon_path = './prefab/information_icon.png'
             line_path = './prefab/information_line_440.png'
         elif article_type == "Breaking":
@@ -331,7 +331,7 @@ class ImageGenerator:
         words = text.split(' ')
         while words:
             line = ''
-            while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
+            while words and int(font.getlength(line + words[0])) <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
                 if words[0].endswith("."):
                     line = line + (words.pop(0) + ' ')
                     break
@@ -359,7 +359,7 @@ class ImageGenerator:
             max_height = self.type2_textbox_size[1]
         while words:
             line = ''
-            while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
+            while words and int(font.getlength(line + words[0])) <= max_width and (font.size + line_spacing) * (len(lines) + 1) < max_height or line == '':
                 if words[0].endswith("."):
                     line = line + (words.pop(0) + ' ')
                     break
@@ -374,6 +374,7 @@ class ImageGenerator:
         # type1으로 모두 만들수 있는 경우
         text_length = len(text)
         text_type_list = []
+        #print(f"image_count:{image_count} textl:{text_length}")
         if text_length < image_count * self.type1_text_length:
             for i in range(image_count):
                 text_type_list.append("type1")
@@ -400,7 +401,7 @@ class ImageGenerator:
             if (font.size + line_spacing) * len(lines) > max_height:
                 raise CustomException.OutOfTextBox(font.size, text_type)
             line = ''
-            while words and font.getlength(line + words[0]) <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
+            while words and int(font.getlength(line + words[0])) <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
                 if words[0].endswith("."):
                     line = line + (words.pop(0) + ' ')
                     break
