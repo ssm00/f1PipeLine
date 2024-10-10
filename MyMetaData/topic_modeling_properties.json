@@ -1,0 +1,9 @@
+{
+  "topic_modeling_date_range": 4,
+  "dynamic_topic_number_range": {
+    "start": 2,
+    "end": 4,
+    "step": 2
+  },
+  "visualization_output_path": "./data/lda/"
+}

@@ -10,9 +10,10 @@
     "godic_font": "./prefab/Noto_Sans_KR/static/NotoSansKR-Bold.ttf",
     "main_content_line_spacing": 15,
     "main_content_font_size": 40,
-    "type2_size": "(2160, 1350)",
+    "type2_image_size": [2160, 1350],
     "type1_text_length": 160,
     "type2_text_length": 220,
-    "type1_textbox_size" : "(900, 370)",
-    "type2_textbox_size" : "(430, 1050)"
+    "type1_textbox_size" : [900, 425],
+    "type2_textbox_size" : [430, 1000],
+    "logo_position" : [500, 1270]
 }
