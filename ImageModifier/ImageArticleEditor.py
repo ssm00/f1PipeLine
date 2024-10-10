@@ -25,29 +25,44 @@ class ImageGenerator:
         self.type2_textbox_size = image_generator_info.get("type2_textbox_size")
 
     def select_article_line(self, article_type, line_type):
+        article_type = article_type.lower()
         if line_type == "type1":
-            if article_type == "Information" or article_type == "News" or article_type == "Feature":
+            if article_type == "information":
                 line_path = './prefab/information_line_440.png'
-            elif article_type == "Breaking":
+            elif article_type == "breaking":
                 line_path = './prefab/breaking_line_440.png'
-            elif article_type == "Official":
+            elif article_type == "official":
                 line_path = './prefab/official_line_440.png'
-            elif article_type == "Tech":
+            elif article_type == "tech":
                 line_path = './prefab/tech_line_440.png'
-            elif article_type == "Rumor":
+            elif article_type == "rumor":
                 line_path = './prefab/rumor_line_440.png'
         elif line_type == "type2":
-            if article_type == "Information" or article_type == "News" or article_type == "Feature":
+            if article_type == "information":
                 line_path = './prefab/information_line_1050.png'
-            elif article_type == "Breaking":
+            elif article_type == "breaking":
                 line_path = './prefab/breaking_line_1050.png'
-            elif article_type == "Official":
+            elif article_type == "official":
                 line_path = './prefab/official_line_1050.png'
-            elif article_type == "Tech":
+            elif article_type == "tech":
                 line_path = './prefab/tech_line_1050.png'
-            elif article_type == "Rumor":
+            elif article_type == "rumor":
                 line_path = './prefab/rumor_line_1050.png'
         return line_path
+
+    def select_subtitle_font_color(self, article_type):
+        article_type = article_type.lower()
+        if article_type == "information":
+            color = self.information_color
+        elif article_type == "breaking":
+            color = self.breaking_color
+        elif article_type == "official":
+            color = self.official_color
+        elif article_type == "tech":
+            color = self.tech_color
+        elif article_type == "rumor":
+            color = self.rumor_color
+        return color
 
     def add_icon_to_image(self, image, icon_path, position):
         """
@@ -73,19 +88,20 @@ class ImageGenerator:
     # article_type은 Information, Breaking, Official, Tech, Rumor 다섯가지
     def add_title_icon_to_image(self, image_path, article_type):
         image_name = os.path.splitext(os.path.basename(image_path))[0]
-        if article_type == "Information" or article_type == "News" or article_type == "Feature":
+        article_type = article_type.lower()
+        if article_type == "information":
             icon_path = './prefab/information_icon.png'
             line_path = './prefab/information_line_440.png'
-        elif article_type == "Breaking":
+        elif article_type == "breaking":
             icon_path = './prefab/breaking_icon.png'
             line_path = './prefab/breaking_line_440.png'
-        elif article_type == "Official":
+        elif article_type == "official":
             icon_path = './prefab/official_icon.png'
             line_path = './prefab/official_line_440.png'
-        elif article_type == "Tech":
+        elif article_type == "tech":
             icon_path = './prefab/tech_icon.png'
             line_path = './prefab/tech_line_440.png'
-        elif article_type == "Rumor":
+        elif article_type == "rumor":
             icon_path = './prefab/rumor_icon.png'
             line_path = './prefab/rumor_line_440.png'
         logo_path = './prefab/logo.png'
@@ -551,14 +567,16 @@ class ImageGenerator:
         fix_size_value = 3
         resized_image_path = self.resize_alpha_adjust_type1(image_path, article_id)
         self.add_title_icon_to_image(resized_image_path, article_type)
+        subtitle_color = self.select_subtitle_font_color(article_type)
         while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
             try:
                 image = Image.open(resized_image_path).convert('RGBA')
                 title_font = ImageFont.truetype(self.godic_font, title_font_size)
                 sub_title_font = ImageFont.truetype(self.godic_font, sub_title_font_size)
+                # 제목 추가
                 self.add_text_to_image(image, title, title_position, title_font, title_box_size, title_color, 10, "title")
-                self.add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size,
-                                  self.information_color, 7, "sub_title")
+                # 부제목 추가
+                self.add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, subtitle_color, 7, "sub_title")
                 result_image = image.convert('RGB')
                 save_dir = os.path.join(self.prefix_after_processing_path, str(article_id))
                 title_image_path = os.path.join(save_dir, "title_image.png")

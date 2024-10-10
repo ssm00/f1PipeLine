@@ -44,22 +44,27 @@ class F1Main:
         dynamic_topic_range = (dynamic_topic_number_range.get("start"), dynamic_topic_number_range.get("end"), dynamic_topic_number_range.get("step"))
         self.topic_modeling.run(date_range, dynamic_topic_range)
 
-    def make_img(self, translate_content, article_sequence, article_id, article_type):
+    def make_img(self, translate_content, article_sequence):
         paragraph_list = translate_content.get("paragraph")
         recommend_title = translate_content.get("recommendTitle")
         click_bait_title = translate_content.get("clickBaitTitle")
         final_sentence = translate_content.get("finalSentence")
+        keyword_list = translate_content.get("properNouns")
+        article_type = translate_content.get("articleType").get("type")
         text = ""
         for paragraph, content in paragraph_list.items():
             text = text + content + " "
         text += final_sentence
-        image_list = database.get_images_by_article_id(article_id)
+        ######### 이미지 없는 경우 필터링 IndexError
+        image_list = self.database.get_images_by_keyword_list(keyword_list)
         image_path_list = []
         for image in image_list:
             image_path_list.append(image_generator_info.get("image_source_path") + image.get("image_name") + ".png")
-        ######### 이미지 없는 경우 필터링 IndexError
-        self.image_generator.create_title_image(image_path_list[0], recommend_title, click_bait_title, article_type, article_sequence)
-        self.image_generator.create_main_content(text, image_path_list, article_type, article_sequence)
+        try:
+            self.image_generator.create_title_image(image_path_list[0], recommend_title, click_bait_title, article_type, article_sequence)
+            self.image_generator.create_main_content(text, image_path_list, article_type, article_sequence)
+        except IndexError:
+            print(f"list : {image_list}, keyword = {keyword_list} 메인 컨텐츠 생성 적합한 이미지 없음")
 
     def v1_one_article(self):
         #crawlinwg
@@ -78,10 +83,9 @@ class F1Main:
         article_id = result.get("article_id")
         translate_content_json = article_translator.translate_v1(original_content)
         translate_content = json.loads(translate_content_json)
-        self.make_img(translate_content, sequence, article_id, article_type)
-        
         #db translate_content 업데이트
         database.update_translate_content(sequence, translate_content_json)
+        self.make_img(translate_content, sequence)
 
     def v1_all_article(self):
         # crawling
@@ -96,17 +100,20 @@ class F1Main:
         for article in tqdm(article_list):
             sequence = article.get("sequence")
             original_content = article.get("original_content")
-            article_type = article.get("article_type")
             article_id = article.get("article_id")
 
             translate_content_json = article_translator.translate_v1(original_content)
-            translate_content = json.loads(translate_content_json)
-            database.update_translate_content(sequence, translate_content_json)
-            self.make_img(translate_content, sequence, article_id, article_type)
-            # db translate_content 업데이트
+            try:
+                translate_content = json.loads(translate_content_json)
+                # db translate_content 업데이트
+                database.update_translate_content(sequence, translate_content_json)
+                self.make_img(translate_content, sequence)
+                print(f"seq : {sequence} 성공")
+            except json.decoder.JSONDecodeError:
+                print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
+            
 
-    def v1_one_article_sequence(self, sequence):
-
+    def v1_one_article_by_sequence(self, sequence):
         # get one
         result = self.database.get_one_by_sequence(sequence)
         # translator
@@ -117,12 +124,12 @@ class F1Main:
         article_id = result.get("article_id")
         translate_content_json = result.get("translate_content")
         translate_content = json.loads(translate_content_json)
-        self.make_img(translate_content, sequence, article_id, article_type)
+        self.make_img(translate_content, sequence)
 
 if __name__ == '__main__':
     freeze_support()
     database = f1Db.Database(mysql_db)
     main = F1Main(database)
-    main.v1_all_article()
-    #main.v1_one_article_sequence(512)
+    #main.v1_all_article()
+    main.v1_one_article_by_sequence(503)
 

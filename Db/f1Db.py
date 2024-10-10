@@ -81,6 +81,12 @@ class Database:
         select_query = "select image_name, image_description from image where article_id = (%s)"
         return self.fetch_all(select_query, article_id)
 
+    def get_images_by_keyword_list(self, keyword_list):
+        sub_query = " OR ".join(["lower(image_name) LIKE %s"] * len(keyword_list))
+        query = f"SELECT * FROM image WHERE {sub_query} limit 5"
+        params = [f"%{keyword}%" for keyword in keyword_list]
+        return self.fetch_all(query, params)
+
     def update_translate_content(self, sequence, translate_content):
         update_query = "update article set translate_content = (%s) where sequence = (%s)"
         values = (translate_content, sequence)
