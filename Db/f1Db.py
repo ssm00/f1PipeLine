@@ -65,7 +65,7 @@ class Database:
         now = datetime.now()
         start_date = now - timedelta(days=date_range - 1)
         end_date = now + timedelta(days=1)
-        get_one_article_query = "select sequence, article_id, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s) order by sequence desc and translate_content is null"
+        get_one_article_query = "select sequence, article_id, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s) and translate_content is null order by sequence desc"
         values = (start_date, end_date)
         return self.fetch_one(get_one_article_query, values)
 
@@ -73,7 +73,7 @@ class Database:
         now = datetime.now()
         start_date = now - timedelta(days=date_range - 1)
         end_date = now + timedelta(days=1)
-        get_one_article_query = "select sequence, article_id, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s) order by sequence desc and translate_content is null"
+        get_one_article_query = "select sequence, article_id, original_title, original_content, article_type from article where published_at between Date(%s) and Date(%s) and translate_content is null order by sequence desc "
         values = (start_date, end_date)
         return self.fetch_all(get_one_article_query, values)
 
@@ -87,8 +87,8 @@ class Database:
         self.cursor.execute(update_query, values)
         self.commit()
 
-    def get_translate_content(self, sequence):
-        select_query = "select translate_content from article where sequence = (%s)"
+    def get_one_by_sequence(self, sequence):
+        select_query = "select sequence, article_id, original_title, original_content, article_type,translate_content from article where sequence = (%s)"
         return self.fetch_one(select_query, sequence)
 
     def fetch_all(self, query, args=None):
