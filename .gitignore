@@ -9,4 +9,4 @@ __pycache__/
 SeleniumBase/
 ArticleCrawler/test.py
 /ImageModifier/__pycache__
-/data/lda
+/Visualization/lda
