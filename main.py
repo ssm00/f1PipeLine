@@ -31,6 +31,7 @@ class F1Main:
         self.f1_crawler = F1PageCrawler(database, crawler_properties_json.get("download_prefix_path"))
         self.topic_modeling = TopicModeling(database, f1_name_list_json.get("people"), topic_modeling_properties_json.get("visualization_output_path"))
         self.image_generator = ImageGenerator(image_generator_info)
+        self.article_translator = ArticleTranslator(prompt_json, key_json)
         self.database = database
 
     def test_crawling(self):
@@ -73,19 +74,16 @@ class F1Main:
         #get one
         result = self.database.get_one_article_by_date_range(crawler_properties_json.get("total_crawling_date_from_today"))
         #translator
-        prompt_v1 = prompt_json.get("prompt_v1")
-        key = key_json.get("open_ai_api_key")
-        article_translator = ArticleTranslator(prompt_v1, key)
 
         sequence = result.get("sequence")
         original_content = result.get("original_content")
-        article_type = result.get("article_type")
-        article_id = result.get("article_id")
-        translate_content_json = article_translator.translate_v1(original_content)
-        translate_content = json.loads(translate_content_json)
-        #db translate_content 업데이트
-        database.update_translate_content(sequence, translate_content_json)
-        self.make_img(translate_content, sequence)
+        try:
+            translate_content_json = self.article_translator.translate_v1(original_content)
+            translate_content = json.loads(translate_content_json)
+            database.update_translate_content(sequence, translate_content_json)
+            self.make_img(translate_content, sequence)
+        except json.decoder.JSONDecodeError:
+            print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
 
     def v1_all_article(self):
         # crawling
@@ -96,13 +94,12 @@ class F1Main:
         # translator
         prompt_v1 = prompt_json.get("prompt_v1")
         key = key_json.get("open_ai_api_key")
-        article_translator = ArticleTranslator(prompt_v1, key)
         for article in tqdm(article_list):
             sequence = article.get("sequence")
             original_content = article.get("original_content")
             article_id = article.get("article_id")
 
-            translate_content_json = article_translator.translate_v1(original_content)
+            translate_content_json = self.article_translator.translate_v1(original_content)
             try:
                 translate_content = json.loads(translate_content_json)
                 # db translate_content 업데이트
@@ -111,13 +108,29 @@ class F1Main:
                 print(f"seq : {sequence} 성공")
             except json.decoder.JSONDecodeError:
                 print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
-            
 
-    def v1_one_article_by_sequence(self, sequence):
+    def v1_article_translate_batch(self):
+        # crawling
+        #self.test_crawling()
+        # get all
+        article_list = self.database.get_all_article_by_date_range(crawler_properties_json.get("total_crawling_date_from_today"))
+        # translator
+        for article in tqdm(article_list):
+            sequence = article.get("sequence")
+            original_content = article.get("original_content")
+            translate_content_json = self.article_translator.translate_v1(original_content)
+            try:
+                translate_content = json.loads(translate_content_json)
+                # db translate_content 업데이트
+                database.update_translate_content(sequence, translate_content_json)
+                print(f"seq : {sequence} 성공")
+            except json.decoder.JSONDecodeError:
+                print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
+
+    def v1_make_img_by_sequence(self, sequence):
         # get one
         result = self.database.get_one_by_sequence(sequence)
         # translator
-
         sequence = result.get("sequence")
         original_content = result.get("original_content")
         article_type = result.get("article_type")
@@ -131,5 +144,7 @@ if __name__ == '__main__':
     database = f1Db.Database(mysql_db)
     main = F1Main(database)
     #main.v1_all_article()
-    main.v1_one_article_by_sequence(503)
+    #main.v1_make_img_by_sequence(503)
+    main.v1_article_translate_batch()
+    #main.v1_one_article()
 
