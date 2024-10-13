@@ -593,7 +593,7 @@ class ImageGenerator:
         if title_font_size <= min_title_font_size or sub_title_font_size <= min_sub_title_font_size:
             print("최소 폰트 크기 도달: title_font_size={}, sub_title_font_size={}".format(title_font_size, sub_title_font_size))
         else:
-            print("타이틀 이미지 저장 성공")
+            print(f"타이틀 이미지 저장 성공 {article_id}")
 
 
     # type1 textbox size로 페이지 갯수를 미리 계산할 경우 사용할 이미지 선택
