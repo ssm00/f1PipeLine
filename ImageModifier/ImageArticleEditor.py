@@ -555,8 +555,8 @@ class ImageGenerator:
         os.remove(image_path)
 
     def create_title_image(self, image_path, title, sub_title, article_type, article_id):
-        title_box_size = (900, 174)
-        sub_title_box_size = (850, 116)
+        title_box_size = (900, 170)
+        sub_title_box_size = (850, 110)
         title_position = (120, 870)
         sub_title_position = (120, 1113)
         title_font_size = 64

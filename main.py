@@ -57,7 +57,8 @@ class F1Main:
             text = text + content + " "
         text += final_sentence
         ######### 이미지 없는 경우 필터링 IndexError
-        image_list = self.database.get_images_by_keyword_list(keyword_list)
+        #image_list = self.database.get_images_by_keyword_list(keyword_list)
+        image_list = self.database.get_pair_images_by_keyword_list(keyword_list)
         image_path_list = []
         for image in image_list:
             image_path_list.append(image_generator_info.get("image_source_path") + image.get("image_name") + ".png")
@@ -111,7 +112,7 @@ class F1Main:
 
     def v1_article_translate_batch(self):
         # crawling
-        #self.test_crawling()
+        self.test_crawling()
         # get all
         article_list = self.database.get_all_article_by_date_range(crawler_properties_json.get("total_crawling_date_from_today"))
         # translator
@@ -127,7 +128,7 @@ class F1Main:
             except json.decoder.JSONDecodeError:
                 print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
 
-    def v1_make_img_by_sequence(self, sequence):
+    def v1_one_img_by_sequence(self, sequence):
         # get one
         result = self.database.get_one_by_sequence(sequence)
         # translator
@@ -139,12 +140,26 @@ class F1Main:
         translate_content = json.loads(translate_content_json)
         self.make_img(translate_content, sequence)
 
+    def v1_make_img_batch(self):
+        article_list = self.database.get_all_translate_content_by_date_range(crawler_properties_json.get("total_crawling_date_from_today"))
+        for article in tqdm(article_list):
+            try:
+                sequence = article.get("sequence")
+                translate_content = json.loads(article.get("translate_content"))
+                self.make_img(translate_content, sequence)
+                print(f"seq : {sequence} 성공")
+            except json.decoder.JSONDecodeError:
+                print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
+
+
 if __name__ == '__main__':
     freeze_support()
     database = f1Db.Database(mysql_db)
     main = F1Main(database)
     #main.v1_all_article()
+    main.v1_make_img_batch()
     #main.v1_make_img_by_sequence(503)
-    main.v1_article_translate_batch()
+    #main.v1_article_translate_batch()
+    #main.test_output_text()
     #main.v1_one_article()
 

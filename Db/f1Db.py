@@ -5,6 +5,7 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
 from datetime import datetime
 from datetime import timedelta
+from itertools import combinations
 
 class LoginInfo:
     def __init__(self, loginid, password, sequence):
@@ -77,14 +78,33 @@ class Database:
         values = (start_date, end_date)
         return self.fetch_all(get_one_article_query, values)
 
+    def get_all_translate_content_by_date_range(self, date_range):
+        now = datetime.now()
+        start_date = now - timedelta(days=date_range - 1)
+        end_date = now + timedelta(days=1)
+        get_one_article_query = "select sequence, translate_content from article where published_at between Date(%s) and Date(%s) and translate_content is not null order by sequence desc "
+        values = (start_date, end_date)
+        return self.fetch_all(get_one_article_query, values)
+
     def get_images_by_article_id(self, article_id):
         select_query = "select image_name, image_description from image where article_id = (%s)"
         return self.fetch_all(select_query, article_id)
 
     def get_images_by_keyword_list(self, keyword_list):
         sub_query = " OR ".join(["lower(image_name) LIKE %s"] * len(keyword_list))
-        query = f"SELECT * FROM image WHERE {sub_query} limit 5"
+        query = f"select * from image where {sub_query} limit 5"
         params = [f"%{keyword}%" for keyword in keyword_list]
+        return self.fetch_all(query, params)
+
+    def get_pair_images_by_keyword_list(self, keyword_list):
+        # 키워드 리스트에서 2개씩 조합 생성
+        keyword_pairs = list(combinations(keyword_list, 2))
+        sub_queries = []
+        params = []
+        for pair in keyword_pairs:
+            sub_queries.append("(lower(image_name) LIKE %s AND lower(image_name) LIKE %s)")
+            params.extend([f"%{pair[0]}%", f"%{pair[1]}%"])
+        query = f"select * from image where {' OR '.join(sub_queries)} limit 5"
         return self.fetch_all(query, params)
 
     def update_translate_content(self, sequence, translate_content):
