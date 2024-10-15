@@ -47,7 +47,7 @@ class F1Main:
 
     def make_img(self, translate_content, article_sequence):
         paragraph_list = translate_content.get("paragraph")
-        recommend_title = translate_content.get("recommendTitle")
+        attention_grabbing_title = translate_content.get("attentionGrabbingTitle")
         click_bait_title = translate_content.get("clickBaitTitle")
         final_sentence = translate_content.get("finalSentence")
         keyword_list = translate_content.get("properNouns")
@@ -63,7 +63,7 @@ class F1Main:
         for image in image_list:
             image_path_list.append(image_generator_info.get("image_source_path") + image.get("image_name") + ".png")
         try:
-            self.image_generator.create_title_image(image_path_list[0], recommend_title, click_bait_title, article_type, article_sequence)
+            self.image_generator.create_title_image(image_path_list[0], attention_grabbing_title, click_bait_title, article_type, article_sequence)
             self.image_generator.create_main_content(text, image_path_list, article_type, article_sequence)
         except IndexError:
             print(f"list : {image_list}, keyword = {keyword_list} 메인 컨텐츠 생성 적합한 이미지 없음")
@@ -124,7 +124,7 @@ class F1Main:
                 translate_content = json.loads(translate_content_json)
                 # db translate_content 업데이트
                 database.update_translate_content(sequence, translate_content_json)
-                print(f"seq : {sequence} 성공")
+                print(f"seq : {sequence} 번역 기사 db저장 성공")
             except json.decoder.JSONDecodeError:
                 print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
 
@@ -133,9 +133,6 @@ class F1Main:
         result = self.database.get_one_by_sequence(sequence)
         # translator
         sequence = result.get("sequence")
-        original_content = result.get("original_content")
-        article_type = result.get("article_type")
-        article_id = result.get("article_id")
         translate_content_json = result.get("translate_content")
         translate_content = json.loads(translate_content_json)
         self.make_img(translate_content, sequence)
@@ -147,7 +144,7 @@ class F1Main:
                 sequence = article.get("sequence")
                 translate_content = json.loads(article.get("translate_content"))
                 self.make_img(translate_content, sequence)
-                print(f"seq : {sequence} 성공")
+                print(f"seq : {sequence} 이미지 생성 성공")
             except json.decoder.JSONDecodeError:
                 print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
 
@@ -157,9 +154,9 @@ if __name__ == '__main__':
     database = f1Db.Database(mysql_db)
     main = F1Main(database)
     #main.v1_all_article()
+    #main.v1_article_translate_batch()
     main.v1_make_img_batch()
     #main.v1_make_img_by_sequence(503)
-    #main.v1_article_translate_batch()
     #main.test_output_text()
     #main.v1_one_article()
 
