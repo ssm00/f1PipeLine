@@ -1,5 +1,7 @@
 import json
 
+import anthropic
+
 from ImageModifier.ImageArticleEditor import ImageGenerator
 from ArticleCrawler.F1PageCrawler import F1PageCrawler
 from ArticleProcessor.Topic_modeling import TopicModeling
@@ -119,14 +121,17 @@ class F1Main:
         for article in tqdm(article_list):
             sequence = article.get("sequence")
             original_content = article.get("original_content")
-            translate_content_json = self.article_translator.translate_v1(original_content)
             try:
+                translate_content_json = self.article_translator.translate_v1(original_content)
                 translate_content = json.loads(translate_content_json)
                 # db translate_content 업데이트
                 database.update_translate_content(sequence, translate_content_json)
                 print(f"seq : {sequence} 번역 기사 db저장 성공")
             except json.decoder.JSONDecodeError:
-                print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
+                print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content_json}")
+            except anthropic.InternalServerError as err:
+                if err.status_code == "529":
+                    print("anthropic 서버 과부화 나중에 일단 넘어감 나중에 다시 시도")
 
     def v1_one_img_by_sequence(self, sequence):
         # get one
@@ -154,7 +159,7 @@ if __name__ == '__main__':
     database = f1Db.Database(mysql_db)
     main = F1Main(database)
     #main.v1_all_article()
-    #main.v1_article_translate_batch()
+    main.v1_article_translate_batch()
     main.v1_make_img_batch()
     #main.v1_make_img_by_sequence(503)
     #main.test_output_text()
