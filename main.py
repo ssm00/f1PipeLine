@@ -36,8 +36,8 @@ class F1Main:
         self.article_translator = ArticleTranslator(prompt_json, key_json)
         self.database = database
 
-    def test_crawling(self):
-        for i in range(1,5):
+    def run_crawling(self, count):
+        for i in range(1,count):
             self.f1_crawler.run(i)
 
     def test_topic_modeling(self):
@@ -47,7 +47,7 @@ class F1Main:
         dynamic_topic_range = (dynamic_topic_number_range.get("start"), dynamic_topic_number_range.get("end"), dynamic_topic_number_range.get("step"))
         self.topic_modeling.run(date_range, dynamic_topic_range)
 
-    def make_img(self, translate_content, article_sequence):
+    def make_img(self, translate_content, article_sequence, article_id):
         paragraph_list = translate_content.get("paragraph")
         attention_grabbing_title = translate_content.get("attentionGrabbingTitle")
         click_bait_title = translate_content.get("clickBaitTitle")
@@ -60,7 +60,8 @@ class F1Main:
         text += final_sentence
         ######### 이미지 없는 경우 필터링 IndexError
         #image_list = self.database.get_images_by_keyword_list(keyword_list)
-        image_list = self.database.get_pair_images_by_keyword_list(keyword_list)
+        #image_list = self.database.get_pair_images_by_keyword_list(keyword_list)
+        image_list = self.database.get_images_by_article_id(article_id)
         image_path_list = []
         for image in image_list:
             image_path_list.append(image_generator_info.get("image_source_path") + image.get("image_name") + ".png")
@@ -70,14 +71,10 @@ class F1Main:
         except IndexError:
             print(f"list : {image_list}, keyword = {keyword_list} 메인 컨텐츠 생성 적합한 이미지 없음")
 
-    def v1_one_article(self):
-        #crawlinwg
-        self.test_crawling()
-
+    def v1_one_article_translate(self):
         #get one
         result = self.database.get_one_article_by_date_range(crawler_properties_json.get("total_crawling_date_from_today"))
         #translator
-
         sequence = result.get("sequence")
         original_content = result.get("original_content")
         try:
@@ -88,10 +85,7 @@ class F1Main:
         except json.decoder.JSONDecodeError:
             print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
 
-    def v1_all_article(self):
-        # crawling
-        #self.test_crawling()
-
+    def v1_all_article_translate(self):
         # get all
         article_list = self.database.get_all_article_by_date_range(crawler_properties_json.get("total_crawling_date_from_today"))
         # translator
@@ -114,7 +108,7 @@ class F1Main:
 
     def v1_article_translate_batch(self):
         # crawling
-        self.test_crawling()
+        #self.test_crawling()
         # get all
         article_list = self.database.get_all_article_by_date_range(crawler_properties_json.get("total_crawling_date_from_today"))
         # translator
@@ -133,22 +127,24 @@ class F1Main:
                 if err.status_code == "529":
                     print("anthropic 서버 과부화 나중에 일단 넘어감 나중에 다시 시도")
 
-    def v1_one_img_by_sequence(self, sequence):
+    def v1_make_one_img_by_sequence(self, sequence):
         # get one
         result = self.database.get_one_by_sequence(sequence)
         # translator
         sequence = result.get("sequence")
+        article_id = result.get("article_id")
         translate_content_json = result.get("translate_content")
         translate_content = json.loads(translate_content_json)
-        self.make_img(translate_content, sequence)
+        self.make_img(translate_content, sequence, article_id)
 
     def v1_make_img_batch(self):
         article_list = self.database.get_all_translate_content_by_date_range(crawler_properties_json.get("total_crawling_date_from_today"))
         for article in tqdm(article_list):
             try:
                 sequence = article.get("sequence")
+                article_id = article.get("article_id")
                 translate_content = json.loads(article.get("translate_content"))
-                self.make_img(translate_content, sequence)
+                self.make_img(translate_content, sequence, article_id)
                 print(f"seq : {sequence} 이미지 생성 성공")
             except json.decoder.JSONDecodeError:
                 print(f"GPT output json 잘못 생성함 seq : {sequence} 일단 넘어감 내용은 \n {translate_content}")
@@ -159,9 +155,10 @@ if __name__ == '__main__':
     database = f1Db.Database(mysql_db)
     main = F1Main(database)
     #main.v1_all_article()
-    main.v1_article_translate_batch()
-    main.v1_make_img_batch()
-    #main.v1_make_img_by_sequence(503)
+    #main.run_crawling(5)
+    # main.v1_article_translate_batch()
+    # main.v1_make_img_batch()
+    main.v1_make_one_img_by_sequence(606)
     #main.test_output_text()
     #main.v1_one_article()
 
