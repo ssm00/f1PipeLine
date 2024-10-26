@@ -1,8 +1,8 @@
-import cv2
 import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
 from ImageModifier import CustomException
+from datetime import datetime
 
 
 class ImageGenerator:
@@ -10,6 +10,9 @@ class ImageGenerator:
     def __init__(self, image_generator_info):
         self.prefix_after_processing_path = image_generator_info.get("prefix_after_processing_path")
         self.font_path = image_generator_info.get("font_path")
+        self.logo_path = image_generator_info.get("logo_path")
+        self.title_font_size = image_generator_info.get("title_font_size")
+        self.sub_title_font_size = image_generator_info.get("sub_title_font_size")
         self.breaking_color = image_generator_info.get("breaking_color")
         self.information_color = image_generator_info.get("information_color")
         self.official_color = image_generator_info.get("official_color")
@@ -18,11 +21,17 @@ class ImageGenerator:
         self.godic_font = image_generator_info.get("godic_font")
         self.main_content_line_spacing = image_generator_info.get("main_content_line_spacing")
         self.main_content_font_size = image_generator_info.get("main_content_font_size")
-        self.type2_image_size = image_generator_info.get("type2_image_size")
+        self.type1_image_size_4x5 = image_generator_info.get("type1_image_size_4x5")
+        self.type2_image_size_4x5 = image_generator_info.get("type2_image_size_4x5")
+        self.type1_image_size_1x1 = image_generator_info.get("type1_image_size_1x1")
+        self.type2_image_size_1x1 = image_generator_info.get("type2_image_size_1x1")
         self.type1_text_length = image_generator_info.get("type1_text_length")
         self.type2_text_length = image_generator_info.get("type2_text_length")
         self.type1_textbox_size = image_generator_info.get("type1_textbox_size")
         self.type2_textbox_size = image_generator_info.get("type2_textbox_size")
+        self.type2_textbox_size = image_generator_info.get("type2_textbox_size")
+        self.type2_textbox_size = image_generator_info.get("type2_textbox_size")
+        self.image_ratio = image_generator_info.get("image_ratio")
 
     def select_article_line(self, article_type, line_type):
         article_type = article_type.lower()
@@ -104,12 +113,11 @@ class ImageGenerator:
         elif article_type == "rumor":
             icon_path = './prefab/rumor_icon.png'
             line_path = './prefab/rumor_line_440.png'
-        logo_path = './prefab/logo.png'
 
         icon_position = (50, 700)  # (x, y)
         line_position = (50, 780)  # (x, y)
         # 기본 이미지 로드
-        image = Image.open(image_path).convert("RGBA")
+        image = Image.open(image_path).convert("RGB")
         # 기본 이미지에 아이콘 추가
         image_with_icon = self.add_icon_to_image(image, icon_path, icon_position)
         image_with_line = self.add_icon_to_image(image_with_icon, line_path, line_position)
@@ -120,7 +128,10 @@ class ImageGenerator:
         image_name = os.path.splitext(os.path.basename(image_path))[0]
         image = Image.open(image_path)
         w, h = image.size
-        target_size = (1080, 1350)
+        if self.image_ratio == "1x1":
+            target_size = (1080, 1080)
+        else:
+            target_size = (1080, 1350)
         target_height = target_size[1]
         target_width = target_size[0]
         proportion_h = target_size[1] / h
@@ -141,9 +152,9 @@ class ImageGenerator:
             start_y = (new_height - target_height) // 2
             resized_cropped_image = resized_image.crop((0, start_y + 100, new_width, start_y + target_height + 100))
 
-        save_dir = os.path.join(self.prefix_after_processing_path, str(image_id))
+        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
         os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, image_name + ".png")
+        save_path = os.path.join(save_dir, image_name + ".jpg")
         resized_cropped_image.save(save_path)
         return save_path
 
@@ -173,10 +184,10 @@ class ImageGenerator:
         else:
             raise CustomException.SizeNotFitType2(image.size)
 
-        self.add_icon_to_image(resized_cropped_image, "./prefab/logo.png", (500, 1270))
-        save_dir = os.path.join(self.prefix_after_processing_path, str(image_id))
+        self.add_icon_to_image(resized_cropped_image, self.logo_path, (500, 1270))
+        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
         os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, image_name + ".png")
+        save_path = os.path.join(save_dir, image_name + ".jpg")
         resized_cropped_image.save(save_path)
         return save_path
 
@@ -194,7 +205,6 @@ class ImageGenerator:
         image = Image.open(image_path).convert("RGB")
 
         w, h = image.size
-        assert h == 1350 and w == 1080, "입력 이미지 크기는 1080x1350이어야 합니다."
 
         # 구간 설정
         first_start_height = 700
@@ -238,9 +248,9 @@ class ImageGenerator:
         blend_image_section(result_image, alpha3, third_start_height, third_end_height)
         blend_image_section(result_image, alpha4, fourth_start_height, fourth_end_height)
 
-        self.add_icon_to_image(result_image, "./prefab/logo.png",(500,1270))
-        save_dir = os.path.join(self.prefix_after_processing_path, str(image_id))
-        save_path = os.path.join(save_dir, image_name + ".png")
+        self.add_icon_to_image(result_image, self.logo_path,(500,1270))
+        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
+        save_path = os.path.join(save_dir, image_name + ".jpg")
         result_image.save(save_path)
         return save_path
 
@@ -321,15 +331,15 @@ class ImageGenerator:
         blend_image_section(result_image, right_alpha3, right_second_end_width, right_third_end_width)
         blend_image_section(result_image, right_alpha4, right_third_end_width, right_fourth_end_width)
 
-        width = self.type2_image_size[0]
-        height = self.type2_image_size[1]
+        width = self.type2_image_size_4x5[0]
+        height = self.type2_image_size_4x5[1]
         left_image = result_image.crop((0, 0, width / 2, height))
         right_image = result_image.crop((width / 2, 0, width, height))
 
-        save_dir = os.path.join(self.prefix_after_processing_path, str(image_id))
+        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
         image_name = os.path.splitext(os.path.basename(image_path))[0]
-        left_save_path = os.path.join(save_dir, image_name+"_left.png")
-        right_save_path = os.path.join(save_dir, image_name+"_right.png")
+        left_save_path = os.path.join(save_dir, image_name+"_left.jpg")
+        right_save_path = os.path.join(save_dir, image_name+"_right.jpg")
         os.remove(image_path)
         left_image.save(left_save_path)
         right_image.save(right_save_path)
@@ -478,24 +488,14 @@ class ImageGenerator:
         max_width, max_height = box_size
         x, y = position
 
-        #draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
-        # while words:
-        #     line = ''
-        #     while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width:
-        #         if (words[0].endswith(".")):
-        #             line = line + (words.pop(0) + ' ')
-        #             break
-        #         line = line + (words.pop(0) + ' ')
-        #     lines.append(line)
-
         for line in lines:
             draw.text((x, y), line, font=font, fill=text_color)
             y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
         result_image = image.convert('RGB')  # RGBA를 RGB로 변환
         # 결과 저장
-        save_dir = os.path.join(self.prefix_after_processing_path, str(image_id))
-        output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".png")
+        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
+        output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".jpg")
         result_image.save(output_path)
         os.remove(image_path)
 
@@ -526,19 +526,6 @@ class ImageGenerator:
         x, y = position
         #draw.rectangle([x, y, x + max_width, y + max_height], fill=box_color)
 
-        #lines = []
-        # words = text.split(' ')
-        # while words:
-        #     line = ''
-        #     while words and draw.textbbox((0, 0), line + words[0], font=font)[2] <= max_width and (font.size + line_spacing) * (len(lines) + 1) <= max_height or line == '':
-        #         if (words[0].endswith(".")):
-        #             line = line + (words.pop(0) + ' ')
-        #             break
-        #         line = line + (words.pop(0) + ' ')
-        #     lines.append(line)
-        #     if (font.size + line_spacing) * (len(lines) + 1) >= max_height:
-        #         break
-
         for line in lines:
             if left_or_right == "left":
                 draw.text((x, y), line, font=font, fill=text_color)
@@ -549,8 +536,8 @@ class ImageGenerator:
 
         result_image = image.convert('RGB')  # RGBA를 RGB로 변환
         # 결과 저장
-        save_dir = os.path.join(self.prefix_after_processing_path, str(image_id))
-        output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".png")
+        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
+        output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".jpg")
         result_image.save(output_path)
         os.remove(image_path)
 
@@ -578,8 +565,8 @@ class ImageGenerator:
                 # 부제목 추가
                 self.add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, subtitle_color, 7, "sub_title")
                 result_image = image.convert('RGB')
-                save_dir = os.path.join(self.prefix_after_processing_path, str(article_id))
-                title_image_path = os.path.join(save_dir, "title_image.png")
+                save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(article_id))
+                title_image_path = os.path.join(save_dir, "title_image.jpg")
                 result_image.save(title_image_path)
                 os.remove(resized_image_path)
                 break
