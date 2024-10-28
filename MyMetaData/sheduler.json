@@ -1,5 +1,5 @@
 {
-  "scheduler": "job_store_url:mysql+pymysql://user:password@localhost/batch_db",
+  "job_store_url":"mysql+pymysql://username:password@host:port/batch_db",
   "max_threads":10,
   "max_processes": 5,
   "jobs": {
