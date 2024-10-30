@@ -28,10 +28,10 @@ class BasicArticleInfo:
 
 class F1PageCrawler:
 
-    def __init__(self, database, download_prefix_path):
+    def __init__(self, database, crawler_properties_json):
         self.database = database
         self.main_page_url = "https://www.formula1.com/en/latest/all?articleFilters=&page="
-        self.download_prefix_path = download_prefix_path
+        self.download_prefix_path = crawler_properties_json.get("download_prefix_path")
         self.header = {
             '_scid': '2fec4d4c-acb5-4c9a-ab8d-0d7ef93ad926',
             '_cb': 'ByHKf7BTh2wJDUG93t',
@@ -90,7 +90,6 @@ class F1PageCrawler:
     def crawling_article_content_and_photo(self, basic_article_info_list):
             for basic_article_info in basic_article_info_list:
                 try:
-                    print(basic_article_info.href)
                     if basic_article_info.article_type == "News" or basic_article_info.article_type == "Technical" or basic_article_info.article_type == "Feature":
                         article_request = re.get(basic_article_info.href).text
                         article = BeautifulSoup(article_request, 'html.parser')
@@ -134,7 +133,7 @@ class F1PageCrawler:
                                     self.img_download(img_source, img_name, self.download_prefix_path)
                             self.database.save_article_image_info(basic_article_info.article_id, img_source, img_name, image_description)
                 except Exception as e:
-                    print(f"기사 세부 정보 크롤링 도중 에러 발생 메시지는 : \n{e} \n{traceback.format_exc()}")
+                    print(f"{basic_article_info.href} 기사 세부 정보 크롤링 도중 에러 발생 메시지는 : \n{e} \n{traceback.format_exc()}")
 
     def change_to_kr_datetime(self, timestamp):
         timestamp = int(timestamp) / 1000
