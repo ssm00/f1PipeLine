@@ -31,10 +31,15 @@ from collections import defaultdict
 
 class TopicModeling:
 
-    def __init__(self, database, f1_name_dict, visualization_output_path):
+    def __init__(self, database, topic_modeling_properties_json):
         self.database = database
-        self.f1_name_dict = f1_name_dict
-        self.visualization_output_path = visualization_output_path
+        self.f1_name_dict = topic_modeling_properties_json.get("people")
+        self.visualization_output_path = topic_modeling_properties_json.get("visualization_output_path")
+        self.date_range = topic_modeling_properties_json.get("topic_modeling_date_range")
+        self.start_topic_number = topic_modeling_properties_json.get("topic_number").get("start")
+        self.end_topic_number = topic_modeling_properties_json.get("topic_number").get("end")
+        self.step_topic_number = topic_modeling_properties_json.get("topic_number").get("step")
+        self.topic_range = (self.start_topic_number, self.end_topic_number, self.step_topic_number)
 
     def download_nltk_package(self):
         nltk.download('punkt') # 토크나이저
@@ -140,7 +145,7 @@ class TopicModeling:
             topic_top_articles[topic_id] = [pk for pk, prob in top_articles]
         return topic_top_articles
 
-    def start_topic_modeling(self, dynamic_topic_range, start_date, end_date):
+    def start_topic_modeling(self, topic_number_range, start_date, end_date):
         start_time = time.time()
         select_all_bow = "select sequence, bow from article where published_at between Date(%s) and Date(%s)"
         param = (start_date, end_date)
@@ -160,7 +165,7 @@ class TopicModeling:
         #토픽모델링
         coherence_values = []
         model_list = []
-        for topic_num in tqdm(dynamic_topic_range):
+        for topic_num in tqdm(topic_number_range):
             # passes : 최대 반복 횟수
             ldamodel = LdaModel(corpus, num_topics=topic_num, id2word=dictionary, passes=5)
             model_list.append(ldamodel)
@@ -169,7 +174,7 @@ class TopicModeling:
             coherence_values.append(coherence_lda)
         best_model_index = coherence_values.index(max(coherence_values))
         best_model = model_list[best_model_index]
-        best_topic_num = dynamic_topic_range[best_model_index]
+        best_topic_num = topic_number_range[best_model_index]
         # doc_topics 토픽의 분포 [(0, 0.4), (1, 0.3), (2, 0.2), (3, 0.1)] 첫번째 토픽에 40프로 분포
         doc_topics = best_model[corpus]
         #추가수정
@@ -192,12 +197,12 @@ class TopicModeling:
         lda_visualization = pyLDAvis.gensim.prepare(best_model, corpus, dictionary, sort_topics=False)
         pyLDAvis.save_html(lda_visualization, output_path)
 
-    def run(self, date_range, dynamic_topic_range):
+    def run(self):
         now = datetime.now()
-        start_date = now - timedelta(days=date_range - 1)
+        start_date = now - timedelta(days=self.date_range - 1)
         end_date = now + timedelta(days=1)
         self.update_bow(start_date, end_date)
-        self.start_topic_modeling(dynamic_topic_range, start_date, end_date)
+        self.start_topic_modeling(self.topic_number_range, start_date, end_date)
 
 # if __name__ == '__main__':
 #   freeze_support()
