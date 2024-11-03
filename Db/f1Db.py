@@ -2,10 +2,10 @@ import os
 import sys
 import pymysql
 from datetime import datetime
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
-from datetime import datetime
 from datetime import timedelta
 from itertools import combinations
+import logging
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
 
 class LoginInfo:
     def __init__(self, loginid, password, sequence):
@@ -35,23 +35,27 @@ class Article:
 
 
 class Database:
-    def __init__(self, db_info):
-        self.type = db_info["type"]
-        self.db = pymysql.connect(
-            host=db_info['host'],
-            user=db_info['id'],
-            password=db_info['password'],
-            db=db_info['db'],
-            charset='utf8mb4',
-        )
-        self.cursor = self.db.cursor(pymysql.cursors.DictCursor)
-        self.table = db_info.get('table', "")
+    def __init__(self, db_info, logger):
+        try:
+            self.type = db_info["type"]
+            self.db = pymysql.connect(
+                host=db_info['host'],
+                user=db_info['id'],
+                password=db_info['password'],
+                db=db_info['db'],
+                charset='utf8mb4',
+            )
+            self.cursor = self.db.cursor(pymysql.cursors.DictCursor)
+            self.logger = logger
+        except Exception as e:
+            self.logger.error(f"데이터베이스 연결 실패: {e}")
+            raise
 
     def execute(self, query, args=None):
         self.cursor.execute(query, args)
 
     def save_basic_article(self, basic_article_info):
-        query = f"""INSERT IGNORE INTO {self.table} (article_id, original_title, original_content, href, article_type, published_at, collected_at) VALUES (%s,%s,%s,%s,%s,%s,%s)"""
+        query = f"""INSERT IGNORE INTO article (article_id, original_title, original_content, href, article_type, published_at, collected_at) VALUES (%s,%s,%s,%s,%s,%s,%s)"""
         values = (basic_article_info.article_id, basic_article_info.original_title, basic_article_info.original_content, basic_article_info.href, basic_article_info.article_type, basic_article_info.published_at, datetime.now().strftime("%y-%m-%d %H:%M:S"))
         self.cursor.execute(query, values)
         self.commit()
@@ -78,26 +82,23 @@ class Database:
         values = (start_date, end_date)
         return self.fetch_all(get_one_article_query, values)
 
-    def get_all_translate_content_by_date_range(self, date_range):
-        now = datetime.now()
-        start_date = now - timedelta(days=date_range - 1)
-        end_date = now + timedelta(days=1)
-        get_one_article_query = "select sequence, translate_content from article where published_at between Date(%s) and Date(%s) and translate_content is not null order by sequence desc "
-        values = (start_date, end_date)
-        return self.fetch_all(get_one_article_query, values)
+    def get_all_translate_content_today(self):
+        get_one_article_query = "select sequence, article_id, translate_content from article where Date(collected_at) = CURDATE() and translate_content is not null order by sequence desc "
+        return self.fetch_all(get_one_article_query)
 
     def get_images_by_article_id(self, article_id):
         select_query = "select image_name, image_description from image where article_id = (%s)"
         return self.fetch_all(select_query, article_id)
-
+    
+    # 키워드 하나만 포함된 이미지
     def get_images_by_keyword_list(self, keyword_list):
         sub_query = " OR ".join(["lower(image_name) LIKE %s"] * len(keyword_list))
         query = f"select * from image where {sub_query} limit 5"
         params = [f"%{keyword}%" for keyword in keyword_list]
         return self.fetch_all(query, params)
 
+    # 키워드 2개 포함된 이미지 조합 생성
     def get_pair_images_by_keyword_list(self, keyword_list):
-        # 키워드 리스트에서 2개씩 조합 생성
         keyword_pairs = list(combinations(keyword_list, 2))
         sub_queries = []
         params = []
