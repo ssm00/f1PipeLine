@@ -3,12 +3,14 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 from ImageModifier import CustomException
 from datetime import datetime
-
+from util.commonException import CommonError, ErrorCode
 
 class ImageGenerator:
 
-    def __init__(self, image_generator_info):
+    def __init__(self, database, image_generator_info):
+        self.database = database
         self.prefix_after_processing_path = image_generator_info.get("prefix_after_processing_path")
+        self.image_source_path = image_generator_info.get("image_source_path")
         self.font_path = image_generator_info.get("font_path")
         self.logo_path = image_generator_info.get("logo_path")
         self.title_font_size = image_generator_info.get("title_font_size")
@@ -600,6 +602,19 @@ class ImageGenerator:
             select_image_index_list[i] += 1
         return select_image_index_list
 
+    def get_image_path_list(self, article_id=None, keyword_list=None):
+        if article_id is not None:
+            image_list = self.database.get_images_by_article_id(article_id)
+        elif keyword_list is not None:
+            image_list = self.database.get_images_by_keyword_list(keyword_list)
+            image_list.extend(self.database.get_pair_images_by_keyword_list(keyword_list))
+        if len(image_list) == 0:
+            raise CommonError(ErrorCode.NOMATCH_IMAGE, "메인 컨텐츠 생성 적합한 이미지 없음", article_id + keyword_list)
+        image_path_list = []
+        for image in image_list:
+            image_path_list.append(self.image_source_path + image.get("image_name") + ".png")
+        return image_path_list
+
 
     #type1 으로만 만들기
     def create_main_image_only_type1(self, article_type, divided_text_list, font, image_path_list, select_image_index_list, image_id):
@@ -650,4 +665,5 @@ class ImageGenerator:
                 image_index += 1
                 self.add_text_type1(save_path, lines, font, self.main_content_line_spacing, article_type, image_index, article_id)
                 words = left_words
+
 
