@@ -10,3 +10,4 @@ SeleniumBase/
 ArticleCrawler/test.py
 /ImageModifier/__pycache__
 /Visualization/lda
+/logs
