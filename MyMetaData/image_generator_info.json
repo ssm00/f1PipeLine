@@ -1,6 +1,6 @@
 {
-    "prefix_after_processing_path": "./after_processing_image/",
-    "image_source_path": "./download_image/",
+    "prefix_after_processing_path": "after_processing_image",
+    "image_source_path": "download_image",
     "font_path" : "./prefab/Cafe24Ohsquare-v2.0/Cafe24Ohsquare-v2.0.ttf",
     "logo_path" : "./prefab/logo.png",
     "breaking_color" : "#FB0045",

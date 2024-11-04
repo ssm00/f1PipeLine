@@ -4,11 +4,13 @@ from PIL import Image, ImageDraw, ImageFont
 from ImageModifier import CustomException
 from datetime import datetime
 from util.commonException import CommonError, ErrorCode
+from aws.s3 import S3Manager
 
 class ImageGenerator:
 
     def __init__(self, database, image_generator_info):
         self.database = database
+        self.s3_manager = S3Manager()
         self.prefix_after_processing_path = image_generator_info.get("prefix_after_processing_path")
         self.image_source_path = image_generator_info.get("image_source_path")
         self.font_path = image_generator_info.get("font_path")
@@ -76,18 +78,6 @@ class ImageGenerator:
         return color
 
     def add_icon_to_image(self, image, icon_path, position):
-        """
-        이미지에 아이콘을 추가
-
-        Parameters:
-        - image_path: 기본 이미지 경로
-        - icon_path: 추가할 아이콘 이미지 경로
-        - position: 아이콘을 추가할 위치 (x, y)
-
-        Returns:
-        - 아이콘이 추가된 이미지
-        """
-
         # 아이콘 이미지 로드
         icon = Image.open(icon_path).convert("RGBA")
         if icon is None:
@@ -97,8 +87,8 @@ class ImageGenerator:
         return image
 
     # article_type은 Information, Breaking, Official, Tech, Rumor 다섯가지
-    def add_title_icon_to_image(self, image_path, article_type):
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
+    def add_title_icon_to_image(self, image, article_type):
+        #image_name = os.path.splitext(os.path.basename(image))[0]
         article_type = article_type.lower()
         if article_type == "information":
             icon_path = './prefab/information_icon.png'
@@ -119,16 +109,18 @@ class ImageGenerator:
         icon_position = (50, 700)  # (x, y)
         line_position = (50, 780)  # (x, y)
         # 기본 이미지 로드
-        image = Image.open(image_path).convert("RGB")
+        #image = Image.open(image).convert("RGB")
+        #image = image.convert("RGB")
         # 기본 이미지에 아이콘 추가
         image_with_icon = self.add_icon_to_image(image, icon_path, icon_position)
         image_with_line = self.add_icon_to_image(image_with_icon, line_path, line_position)
         # 최종 결과 저장
-        image_with_line.save(image_path)
+        #image_with_line.save(image)
+        return image
 
-    def resize_image_type1(self, image_path, image_id):
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
-        image = Image.open(image_path)
+    def resize_image_type1(self, image, image_id):
+        # image_name = os.path.splitext(os.path.basename(image_path))[0]
+        # image = Image.open(image_path)
         w, h = image.size
         if self.image_ratio == "1x1":
             target_size = (1080, 1080)
@@ -154,12 +146,11 @@ class ImageGenerator:
             start_y = (new_height - target_height) // 2
             resized_cropped_image = resized_image.crop((0, start_y + 100, new_width, start_y + target_height + 100))
 
-        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
-        os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, image_name + ".jpg")
-        resized_cropped_image.save(save_path)
-        return save_path
-
+        # save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
+        # os.makedirs(save_dir, exist_ok=True)
+        # save_path = os.path.join(save_dir, image_name + ".jpg")
+        # resized_cropped_image.save(save_path)
+        return resized_cropped_image
 
     def resize_image_type2(self, image_path, image_id):
         """
@@ -193,18 +184,9 @@ class ImageGenerator:
         resized_cropped_image.save(save_path)
         return save_path
 
-    def apply_alpha_gradient_type1(self, image_path, image_id):
-        """
-        이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
-
-        Parameters:
-        - image: 처리할 1080x1350 이미지
-
-        Returns:
-        - 그라데이션 처리가 된 1080x1350 이미지
-        """
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
-        image = Image.open(image_path).convert("RGB")
+    def apply_alpha_gradient_type1(self, image, image_id):
+        #image_name = os.path.splitext(os.path.basename(image))[0]
+        image = image.convert("RGB")
 
         w, h = image.size
 
@@ -251,21 +233,12 @@ class ImageGenerator:
         blend_image_section(result_image, alpha4, fourth_start_height, fourth_end_height)
 
         self.add_icon_to_image(result_image, self.logo_path,(500,1270))
-        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
-        save_path = os.path.join(save_dir, image_name + ".jpg")
-        result_image.save(save_path)
-        return save_path
+        # save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
+        # save_path = os.path.join(save_dir, image_name + ".jpg")
+        # result_image.save(save_path)
+        return result_image
 
     def split_apply_alpha_gradient_type2(self, image_path, image_id):
-        """
-        이미지의 특정 높이 이후로 선명도를 줄여 검정색으로 변환.
-
-        Parameters:
-        - image: 처리할 2160x1350 이미지
-
-        Returns:
-        - 그라데이션 처리가 된 2160x1350 이미지
-        """
         image = Image.open(image_path).convert("RGB")
 
         w, h = image.size
@@ -455,10 +428,10 @@ class ImageGenerator:
             y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
 
-    def resize_alpha_adjust_type1(self, image_path, image_id):
-        processing1_image_path = self.resize_image_type1(image_path, image_id)
-        save_path = self.apply_alpha_gradient_type1(processing1_image_path, image_id)
-        return save_path
+    def resize_alpha_adjust_type1(self, image, image_id):
+        resized_image = self.resize_image_type1(image, image_id)
+        result_image = self.apply_alpha_gradient_type1(resized_image, image_id)
+        return result_image
 
 
     def resize_alpha_adjust_type2(self, image_path, image_id):
@@ -554,12 +527,13 @@ class ImageGenerator:
         min_title_font_size = 36
         min_sub_title_font_size = 30
         fix_size_value = 3
-        resized_image_path = self.resize_alpha_adjust_type1(image_path, article_id)
-        self.add_title_icon_to_image(resized_image_path, article_type)
+        image = Image.open(image_path)
+        resized_image = self.resize_alpha_adjust_type1(image, article_id)
+        self.add_title_icon_to_image(resized_image, article_type)
         subtitle_color = self.select_subtitle_font_color(article_type)
         while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
             try:
-                image = Image.open(resized_image_path).convert('RGBA')
+                image = resized_image.convert('RGBA')
                 title_font = ImageFont.truetype(self.godic_font, title_font_size)
                 sub_title_font = ImageFont.truetype(self.godic_font, sub_title_font_size)
                 # 제목 추가
@@ -567,10 +541,11 @@ class ImageGenerator:
                 # 부제목 추가
                 self.add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, subtitle_color, 7, "sub_title")
                 result_image = image.convert('RGB')
-                save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(article_id))
-                title_image_path = os.path.join(save_dir, "title_image.jpg")
-                result_image.save(title_image_path)
-                os.remove(resized_image_path)
+                #save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(article_id))
+                #title_image_path = os.path.join(save_dir, "title_image.jpg")
+                #result_image.save(title_image_path)
+                #os.remove(resized_image)
+                self.s3_manager.upload_image(result_image, self.prefix_after_processing_path, article_id, "title_image.jpeg")
                 break
             except CustomException.OutOfTextBox as e:
                 if e.type == "title":
@@ -623,7 +598,7 @@ class ImageGenerator:
             image_path = image_path_list[index]
             for i in range(image_usage_count):
                 text = divided_text_list[text_num]
-                resize_image_path = self.resize_image_type1(image_path, image_id)
+                resize_image_path = self.resize_alpha_adjust_type1(image_path, image_id)
                 self.add_text_type1(resize_image_path, text, font, self.main_content_line_spacing, article_type, index)
                 text_num += 1
 
@@ -665,5 +640,3 @@ class ImageGenerator:
                 image_index += 1
                 self.add_text_type1(save_path, lines, font, self.main_content_line_spacing, article_type, image_index, article_id)
                 words = left_words
-
-
