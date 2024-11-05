@@ -34,18 +34,18 @@ class S3Manager:
             print(f"Unexpected Error: {e}")
             return None
 
-    def upload_image_url(self, upload_path, img_source, img_name, bucket_name):
+    def upload_image_url(self, img_source, upload_path, img_name):
         try:
             image_response = re.get(img_source)
             if image_response.status_code == 200:
-                s3_key = f"{upload_path}/{img_name}.png"
+                s3_key = f"{upload_path}/{img_name}"
                 self.s3.upload_fileobj(
                     BytesIO(image_response.content),
-                    bucket_name,
+                    self.bucket,
                     s3_key,
-                    ExtraArgs={'ContentType': 'image/png'}
+                    ExtraArgs={'ContentType': 'image/jpeg'}
                 )
-                return f"s3://{bucket_name}/{s3_key}"
+                return s3_key
             else:
                 print(f"URL 이미지 다운로드 실패. Status code: {image_response.status_code}")
                 return None
