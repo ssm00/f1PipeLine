@@ -4,6 +4,7 @@ import pymysql
 from datetime import datetime
 from datetime import timedelta
 from itertools import combinations
+import json
 import logging
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
 
@@ -54,14 +55,14 @@ class Database:
     def execute(self, query, args=None):
         self.cursor.execute(query, args)
 
-    def save_basic_article(self, basic_article_info):
+    def save_article_info(self, basic_article_info):
         query = f"""INSERT IGNORE INTO article (article_id, original_title, original_content, href, article_type, published_at, collected_at) VALUES (%s,%s,%s,%s,%s,%s,%s)"""
         values = (basic_article_info.article_id, basic_article_info.original_title, basic_article_info.original_content, basic_article_info.href, basic_article_info.article_type, basic_article_info.published_at, datetime.now().strftime("%y-%m-%d %H:%M:S"))
         self.cursor.execute(query, values)
         self.commit()
 
-    def save_article_image_info(self, article_id, img_source, img_name, image_description):
-        query = f"""INSERT IGNORE INTO image (image_source, image_name, image_description, article_id) VALUES (%s,%s,%s,%s)"""
+    def save_image_info(self, article_id, img_source, img_name, image_description):
+        query = f"""INSERT IGNORE INTO image (image_source, image_name, image_description, article_sequence) VALUES (%s, %s, %s, (SELECT sequence FROM article WHERE article_id = %s))"""
         values = (img_source, img_name, image_description, article_id)
         self.cursor.execute(query, values)
         self.commit()
@@ -86,9 +87,9 @@ class Database:
         get_one_article_query = "select sequence, article_id, translate_content from article where Date(collected_at) = CURDATE() and translate_content is not null order by sequence desc "
         return self.fetch_all(get_one_article_query)
 
-    def get_images_by_article_id(self, article_id):
-        select_query = "select image_name, image_description from image where article_id = (%s)"
-        return self.fetch_all(select_query, article_id)
+    def get_images_by_article_sequence(self, sequence):
+        select_query = "select image_name, image_description from image where article_sequence = (%s)"
+        return self.fetch_all(select_query, sequence)
     
     # 키워드 하나만 포함된 이미지
     def get_images_by_keyword_list(self, keyword_list):
@@ -110,7 +111,7 @@ class Database:
 
     def update_translate_content(self, sequence, translate_content):
         update_query = "update article set translate_content = (%s) where sequence = (%s)"
-        values = (translate_content, sequence)
+        values = (json.dumps(translate_content), sequence)
         self.cursor.execute(update_query, values)
         self.commit()
 
