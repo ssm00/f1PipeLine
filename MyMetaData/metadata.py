@@ -11,6 +11,7 @@ class MetaData:
         self.crawler_properties = None
         self.db_info = None
         self.scheduler_info = None
+        self.account_info = None
         self.config_dir = Path(config_dir)
         self.load_all_json()
 
@@ -28,4 +29,5 @@ class MetaData:
         self.prompt = self.load_json('prompt.json')
         self.image_generator_info = self.load_json('image_generator_info.json')
         self.scheduler_info = self.load_json('scheduler_info.json')
+        self.account_info = self.load_json('account_info.json')
 
