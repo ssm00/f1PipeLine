@@ -12,6 +12,7 @@ class MetaData:
         self.db_info = None
         self.scheduler_info = None
         self.account_info = None
+        self.image_save_path = None
         self.config_dir = Path(config_dir)
         self.load_all_json()
 
@@ -30,4 +31,5 @@ class MetaData:
         self.image_generator_info = self.load_json('image_generator_info.json')
         self.scheduler_info = self.load_json('scheduler_info.json')
         self.account_info = self.load_json('account_info.json')
+        self.image_save_path = self.load_json('image_save_path.json')
 

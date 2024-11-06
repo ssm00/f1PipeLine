@@ -1,0 +1,8 @@
+{
+  "s3": {
+    "after_processing_path": "after_processing_image"
+  },
+  "local": {
+    "original_image": "./original_image"
+  }
+}

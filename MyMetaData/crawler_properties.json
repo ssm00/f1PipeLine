@@ -1,4 +1,3 @@
 {
-  "total_crawling_date_from_today": 3,
-  "download_prefix_path": "./download_image"
+  "total_crawling_date_from_today": 3
 }
