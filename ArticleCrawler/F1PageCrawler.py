@@ -8,6 +8,7 @@ from Db import f1Db
 import json
 import pytz
 import datetime
+from aws.s3 import S3Manager
 
 
 class BasicArticleInfo:
@@ -28,10 +29,11 @@ class BasicArticleInfo:
 
 class F1PageCrawler:
 
-    def __init__(self, database, crawler_properties_json):
+    def __init__(self, database, crawler_properties_json, image_save_path):
         self.database = database
         self.main_page_url = "https://www.formula1.com/en/latest/all?articleFilters=&page="
-        self.download_prefix_path = crawler_properties_json.get("download_prefix_path")
+        self.original_image_path = image_save_path.get("local").get("original_image")
+        self.s3Manager = S3Manager()
         self.header = {
             '_scid': '2fec4d4c-acb5-4c9a-ab8d-0d7ef93ad926',
             '_cb': 'ByHKf7BTh2wJDUG93t',
@@ -88,52 +90,58 @@ class F1PageCrawler:
 
     #개별 기사 크롤링
     def crawling_article_content_and_photo(self, basic_article_info_list):
-            for basic_article_info in basic_article_info_list:
-                try:
-                    if basic_article_info.article_type == "News" or basic_article_info.article_type == "Technical" or basic_article_info.article_type == "Feature":
-                        article_request = re.get(basic_article_info.href).text
-                        article = BeautifulSoup(article_request, 'html.parser')
-                        article_content_cluster = article.find('article',{"class":"col-span-6"})
-                        timestamp = article.find('time',{"class":"font-titillium"})["datetime"]
-                        published_at = self.change_to_kr_datetime(timestamp)
-                        photo_list = article_content_cluster.find_all("div", {"class": "f1-breakout"})
-                        p_tag_list = article_content_cluster.find_all("p")
-                        content = ""
-                        # 아티클 중 p 태그
-                        for p in p_tag_list:
-                            read_more = r'READ MORE'
-                            if regex.search(read_more, p.text):
-                                continue
-                            content += p.text + '\n'
-                        basic_article_info.add_article_content(content)
-                        basic_article_info.add_published_at(published_at)
-                        self.database.save_basic_article(basic_article_info)
+        for basic_article_info in basic_article_info_list:
+            try:
+                if basic_article_info.article_type == "News" or basic_article_info.article_type == "Technical" or basic_article_info.article_type == "Feature":
+                    article_request = re.get(basic_article_info.href).text
+                    article = BeautifulSoup(article_request, 'html.parser')
+                    article_content_cluster = article.find('article',{"class":"col-span-6"})
+                    timestamp = article.find('time',{"class":"font-titillium"})["datetime"]
+                    published_at = self.change_to_kr_datetime(timestamp)
+                    photo_list = article_content_cluster.find_all("div", {"class": "f1-breakout"})
+                    p_tag_list = article_content_cluster.find_all("p")
+                    content = ""
+                    # 아티클 중 p 태그
+                    for p in p_tag_list:
+                        read_more = r'READ MORE'
+                        if regex.search(read_more, p.text):
+                            continue
+                        content += p.text + '\n'
+                    basic_article_info.add_article_content(content)
+                    basic_article_info.add_published_at(published_at)
+                    self.database.save_article_info(basic_article_info)
 
-                        # 기사의 사진 저장 하기
-                        for photo in photo_list:
-                            if photo.find("figure") is not None:
-                                img_source = photo.find("img")['src']
-                                img_name = photo.find("img")['alt']
-                                img_name = self.replace_invalid_chars(img_name)
-                                if photo.find("figure") is None:
-                                    image_description = img_name
-                                else:
-                                    try:
-                                        image_description = photo.find("figcaption").text
-                                    except AttributeError as e:
-                                        image_description = None
-                                self.img_download(img_source, img_name, self.download_prefix_path)
-                            elif photo.find("div",{"class","f1-carousel__slide"}) is not None:
-                                photo_slide = photo.find_all("div", {"class", "f1-carousel__slide"})
-                                for photo_in_slide in photo_slide:
-                                    img_source = photo_in_slide.find("img")['src']
-                                    img_name = photo_in_slide.find("img")['alt']
-                                    img_name = self.replace_invalid_chars(img_name)
-                                    image_description = img_name
-                                    self.img_download(img_source, img_name, self.download_prefix_path)
-                            self.database.save_article_image_info(basic_article_info.article_id, img_source, img_name, image_description)
-                except Exception as e:
-                    print(f"{basic_article_info.href} 기사 세부 정보 크롤링 도중 에러 발생 메시지는 : \n{e} \n{traceback.format_exc()}")
+                    # 기사의 사진 저장 하기
+                    self.crawling_image(basic_article_info, photo_list)
+            except Exception as e:
+                print(f"{basic_article_info.href} 기사 세부 정보 크롤링 도중 에러 발생 메시지는 : \n{e} \n{traceback.format_exc()}")
+
+    def crawling_image(self, basic_article_info, photo_list):
+        for photo in photo_list:
+            if photo.find("figure") is not None:
+                img_source = photo.find("img")['src']
+                img_name = photo.find("img")['alt']
+                img_name = self.replace_invalid_chars(img_name)
+                if photo.find("figure") is None:
+                    image_description = img_name
+                else:
+                    try:
+                        image_description = photo.find("figcaption").text
+                    except AttributeError as e:
+                        image_description = None
+                self.img_download(img_source, img_name, self.original_image_path)
+                #self.s3Manager.upload_image_url(img_source, self.download_prefix_path, img_name)
+                self.database.save_image_info(basic_article_info.article_id, img_source, img_name, image_description)
+            elif photo.find("div", {"class", "f1-carousel__slide"}) is not None:
+                photo_slide = photo.find_all("div", {"class", "f1-carousel__slide"})
+                for photo_in_slide in photo_slide:
+                    img_source = photo_in_slide.find("img")['src']
+                    img_name = photo_in_slide.find("img")['alt']
+                    img_name = self.replace_invalid_chars(img_name)
+                    image_description = img_name
+                    self.img_download(img_source, img_name, self.original_image_path)
+                    #self.s3Manager.upload_image_url(img_source, self.download_prefix_path, img_name)
+                    self.database.save_image_info(basic_article_info.article_id, img_source, img_name, image_description)
 
     def change_to_kr_datetime(self, timestamp):
         timestamp = int(timestamp) / 1000
@@ -153,7 +161,7 @@ class F1PageCrawler:
     def img_download(self, img_source, img_name, save_path):
         response = re.get(img_source)
         if response.status_code == 200:
-            file_name = f"{save_path}/{img_name}.png"
+            file_name = f"{save_path}/{img_name}.jpeg"
             with open(file_name, 'wb') as file:
                 file.write(response.content)
         else:
