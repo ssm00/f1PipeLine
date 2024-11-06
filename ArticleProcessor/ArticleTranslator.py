@@ -53,7 +53,7 @@ class ArticleTranslator:
                 start_index = translate_content_json.find('{')
                 processed_string = translate_content_json[start_index:]
                 translate_content = json.loads(processed_string)
-                return translate_content_json
+                return translate_content
             except json.decoder.JSONDecodeError as e:
                 raise CommonError(ErrorCode.JSON_DECODE_ERROR, "잘못된 형식의 JSON 반환", translate_content_json, e)
         except anthropic.InternalServerError as err:
