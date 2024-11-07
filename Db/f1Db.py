@@ -116,8 +116,14 @@ class Database:
         self.commit()
 
     def get_one_by_sequence(self, sequence):
-        select_query = "select sequence, article_id, original_title, original_content, article_type,translate_content from article where sequence = (%s)"
+        select_query = "select sequence, article_id, original_title, original_content, article_type, translate_content from article where sequence = (%s)"
         return self.fetch_one(select_query, sequence)
+
+    def get_title_by_sequence(self, sequence):
+        select_query = "select translate_content from article where sequence = (%s)"
+        translate_content_str = self.fetch_one(select_query, sequence)["translate_content"]
+        translate_content = json.loads(translate_content_str)
+        return translate_content.get("attentionGrabbingTitle")
 
     def fetch_all(self, query, args=None):
         self.cursor.execute(query, args)
