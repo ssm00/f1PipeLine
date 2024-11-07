@@ -1,10 +1,5 @@
-import boto3
-from PIL import Image
 import requests
-import io
-import os
 import time
-from datetime import datetime
 from aws.s3 import S3Manager
 
 
@@ -16,12 +11,13 @@ class InstagramUploader:
         2. 캐러셀 컨테이너 생성
         3. 게시
     """ 
-    def __init__(self, account_info):
+    def __init__(self, account_info, logger):
         self.access_token = account_info.get("instagram").get("access_token")
         self.account_id = account_info.get("instagram").get("account_id")
         self.api_version = account_info.get("instagram").get("api_version")
         self.graph_url = f'https://graph.facebook.com/{self.api_version}'
         self.base_content = account_info.get("instagram").get("base_content")
+        self.logger = logger
         self.s3 = S3Manager()
 
     def create_carousel_item(self, image_url):
@@ -84,9 +80,9 @@ class InstagramUploader:
             container_id = self.create_carousel_container(content, carousel_items)
             time.sleep(1)
             post_id = self.publish_carousel(container_id)
-            print(f"Successfully published carousel post with ID: {post_id}")
+            self.logger.info(f"Successfully published carousel post with ID: {post_id}")
             return post_id
 
         except Exception as e:
-            print(f"Error publishing carousel post: {e}")
+            self.logger.warn(f"Error publishing carousel post: {e}")
             return None
