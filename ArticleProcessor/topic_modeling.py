@@ -21,7 +21,6 @@ from gensim import corpora
 from gensim.models.coherencemodel import CoherenceModel
 from gensim.models.ldamodel import LdaModel
 
-import matplotlib.pyplot as plt
 import pyLDAvis
 import pyLDAvis.gensim
 
