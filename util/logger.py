@@ -9,6 +9,7 @@ from typing import Optional
 class LogType(Enum):
     PROGRAM = "program"
     BATCH = "batch"
+    TEST = "test"
 
 class LogManager:
     def __init__(self, base_dir):
