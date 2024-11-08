@@ -22,14 +22,3 @@ class CommonError(Exception):
             "message": self.message,
             "data": self.data
         }
-
-class ArticleTranslatorError(CommonError):
-    def __init__(self):
-        super().__init__(self.message)
-
-
-class NoMatchImage(Exception):
-    def __init__(self, article_id, keyword_list):
-        self.msg = "메인 컨텐츠 생성 적합한 이미지 없음"
-        self.article_id = article_id
-        self.keyword_list = keyword_list
