@@ -52,9 +52,6 @@ class Database:
             self.logger.error(f"데이터베이스 연결 실패: {e}")
             raise
 
-    def execute(self, query, args=None):
-        self.cursor.execute(query, args)
-
     def save_article_info(self, basic_article_info):
         query = f"""INSERT IGNORE INTO article (article_id, original_title, original_content, href, article_type, published_at, collected_at) VALUES (%s,%s,%s,%s,%s,%s,%s)"""
         values = (basic_article_info.article_id, basic_article_info.original_title, basic_article_info.original_content, basic_article_info.href, basic_article_info.article_type, basic_article_info.published_at, datetime.now().strftime("%y-%m-%d %H:%M:S"))
@@ -65,6 +62,11 @@ class Database:
         query = f"""INSERT IGNORE INTO image (image_source, image_name, image_description, article_sequence) VALUES (%s, %s, %s, (SELECT sequence FROM article WHERE article_id = %s))"""
         values = (img_source, img_name, image_description, article_id)
         self.cursor.execute(query, values)
+        self.commit()
+
+    def update_image_created(self, sequence):
+        update_query = f"update article set image_created = true where sequence = (%s)"
+        self.cursor.execute(update_query, sequence)
         self.commit()
 
     def get_one_article_by_date_range(self, date_range):
@@ -83,9 +85,13 @@ class Database:
         values = (start_date, end_date)
         return self.fetch_all(get_one_article_query, values)
 
-    def get_all_translate_content_today(self):
-        get_one_article_query = "select sequence, article_id, translate_content from article where Date(collected_at) = CURDATE() and translate_content is not null order by sequence desc "
-        return self.fetch_all(get_one_article_query)
+    def get_all_article_image_not_created(self, date_range):
+        now = datetime.now()
+        start_date = now - timedelta(days=date_range - 1)
+        end_date = now + timedelta(days=1)
+        get_one_article_query = "select sequence, article_id, translate_content from article where published_at between Date(%s) and Date(%s) and translate_content is not null and image_created = false order by sequence desc "
+        values = (start_date, end_date)
+        return self.fetch_all(get_one_article_query, values)
 
     def get_images_by_article_sequence(self, sequence):
         select_query = "select image_name, image_description from image where article_sequence = (%s)"
@@ -124,6 +130,12 @@ class Database:
         translate_content_str = self.fetch_one(select_query, sequence)["translate_content"]
         translate_content = json.loads(translate_content_str)
         return translate_content.get("attentionGrabbingTitle")
+
+    def get_title_sequence_list(self, date_str):
+        select_query = "select sequence, translate_content from article where Date(collected_at) = (%s) and translate_content is not null"
+        find_all = self.fetch_all(select_query, date_str)
+        sequence_title = [{"sequence":find.get("sequence"), "title":json.loads(find.get("translate_content")).get("attentionGrabbingTitle")} for find in find_all]
+        return sequence_title
 
     def fetch_all(self, query, args=None):
         self.cursor.execute(query, args)
