@@ -29,8 +29,9 @@ class BasicArticleInfo:
 
 class F1PageCrawler:
 
-    def __init__(self, database, crawler_properties_json, image_save_path):
+    def __init__(self, database, crawler_properties_json, image_save_path, logger):
         self.database = database
+        self.logger = logger
         self.main_page_url = "https://www.formula1.com/en/latest/all?articleFilters=&page="
         self.original_image_path = image_save_path.get("local").get("original_image")
         self.s3Manager = S3Manager()
@@ -85,7 +86,7 @@ class F1PageCrawler:
                 article_info_list.append(BasicArticleInfo(article_id, href, article_type, article_title))
             return article_info_list
         except Exception as e:
-            print(f"기사 기본 정보 및 href 크롤링 중 에러 발생 메시지는 : \n {e}")
+            self.logger.info(f"기사 기본 정보 및 href 크롤링 중 에러 발생 메시지는 : \n {e}")
             return article_info_list
 
     #개별 기사 크롤링
@@ -114,7 +115,7 @@ class F1PageCrawler:
                     # 기사의 사진 저장 하기
                     self.crawling_image(basic_article_info, photo_list)
             except Exception as e:
-                print(f"{basic_article_info.href} 기사 세부 정보 크롤링 도중 에러 발생 메시지는 : \n{e} \n{traceback.format_exc()}")
+                self.logger.info(f"{basic_article_info.href} 기사 세부 정보 크롤링 도중 에러 발생 메시지는 : \n{e} \n{traceback.format_exc()}")
 
     def crawling_image(self, basic_article_info, photo_list):
         for photo in photo_list:
@@ -165,7 +166,7 @@ class F1PageCrawler:
             with open(file_name, 'wb') as file:
                 file.write(response.content)
         else:
-            print(f"Failed to retrieve image. Status code: {response.status_code}")
+            self.logger.info(f"로컬 파일 저장 에러: {response}")
 
     def run(self, page_num):
         target_url = self.main_page_url + str(page_num)
