@@ -1,18 +1,17 @@
 import numpy as np
-import os
 from PIL import Image, ImageDraw, ImageFont
 from ImageModifier import CustomException
-from datetime import datetime
 from util.commonException import CommonError, ErrorCode
 from aws.s3 import S3Manager
 
 class ImageGenerator:
 
-    def __init__(self, database, image_generator_info):
+    def __init__(self, database, image_generator_info, image_save_path, logger):
         self.database = database
         self.s3_manager = S3Manager()
-        self.prefix_after_processing_path = image_generator_info.get("prefix_after_processing_path")
-        self.image_source_path = image_generator_info.get("image_source_path")
+        self.logger = logger
+        self.after_processing_image_path = image_save_path.get("s3").get("after_processing_path")
+        self.original_image_path = image_save_path.get("local").get("original_image")
         self.font_path = image_generator_info.get("font_path")
         self.logo_path = image_generator_info.get("logo_path")
         self.title_font_size = image_generator_info.get("title_font_size")
@@ -88,7 +87,6 @@ class ImageGenerator:
 
     # article_type은 Information, Breaking, Official, Tech, Rumor 다섯가지
     def add_title_icon_to_image(self, image, article_type):
-        #image_name = os.path.splitext(os.path.basename(image))[0]
         article_type = article_type.lower()
         if article_type == "information":
             icon_path = './prefab/information_icon.png'
@@ -108,19 +106,13 @@ class ImageGenerator:
 
         icon_position = (50, 700)  # (x, y)
         line_position = (50, 780)  # (x, y)
-        # 기본 이미지 로드
-        #image = Image.open(image).convert("RGB")
-        #image = image.convert("RGB")
         # 기본 이미지에 아이콘 추가
-        image_with_icon = self.add_icon_to_image(image, icon_path, icon_position)
-        image_with_line = self.add_icon_to_image(image_with_icon, line_path, line_position)
+        self.add_icon_to_image(image, icon_path, icon_position)
+        self.add_icon_to_image(image, line_path, line_position)
         # 최종 결과 저장
-        #image_with_line.save(image)
         return image
 
-    def resize_image_type1(self, image, image_id):
-        # image_name = os.path.splitext(os.path.basename(image_path))[0]
-        # image = Image.open(image_path)
+    def resize_image_type1(self, image):
         w, h = image.size
         if self.image_ratio == "1x1":
             target_size = (1080, 1080)
@@ -145,20 +137,13 @@ class ImageGenerator:
             resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
             start_y = (new_height - target_height) // 2
             resized_cropped_image = resized_image.crop((0, start_y + 100, new_width, start_y + target_height + 100))
-
-        # save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
-        # os.makedirs(save_dir, exist_ok=True)
-        # save_path = os.path.join(save_dir, image_name + ".jpg")
-        # resized_cropped_image.save(save_path)
         return resized_cropped_image
 
-    def resize_image_type2(self, image_path, image_id):
+    def resize_image_type2(self, image):
         """
             가로로 긴 사진 생성 사진이 새로 형식 사진이라면 이미지 비율이 너무 안맞아서 불가능 그냥 return 하기
             2160, 1350 resize
         """
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
-        image = Image.open(image_path)
         w, h = image.size
         target_size = (2160, 1350)
         target_height = target_size[1]
@@ -176,16 +161,9 @@ class ImageGenerator:
         # 세로가 긴 사진인 경우
         else:
             raise CustomException.SizeNotFitType2(image.size)
+        return resized_cropped_image
 
-        self.add_icon_to_image(resized_cropped_image, self.logo_path, (500, 1270))
-        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
-        os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, image_name + ".jpg")
-        resized_cropped_image.save(save_path)
-        return save_path
-
-    def apply_alpha_gradient_type1(self, image, image_id):
-        #image_name = os.path.splitext(os.path.basename(image))[0]
+    def apply_alpha_gradient_type1(self, image):
         image = image.convert("RGB")
 
         w, h = image.size
@@ -233,13 +211,10 @@ class ImageGenerator:
         blend_image_section(result_image, alpha4, fourth_start_height, fourth_end_height)
 
         self.add_icon_to_image(result_image, self.logo_path,(500,1270))
-        # save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
-        # save_path = os.path.join(save_dir, image_name + ".jpg")
-        # result_image.save(save_path)
         return result_image
 
-    def split_apply_alpha_gradient_type2(self, image_path, image_id):
-        image = Image.open(image_path).convert("RGB")
+    def split_apply_alpha_gradient_type2(self, image):
+        image = image.convert("RGB")
 
         w, h = image.size
         assert h == 1350 and w == 2160, "입력 이미지 크기는 2160x1350이어야 합니다."
@@ -310,15 +285,9 @@ class ImageGenerator:
         height = self.type2_image_size_4x5[1]
         left_image = result_image.crop((0, 0, width / 2, height))
         right_image = result_image.crop((width / 2, 0, width, height))
-
-        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
-        left_save_path = os.path.join(save_dir, image_name+"_left.jpg")
-        right_save_path = os.path.join(save_dir, image_name+"_right.jpg")
-        os.remove(image_path)
-        left_image.save(left_save_path)
-        right_image.save(right_save_path)
-        return left_save_path, right_save_path
+        self.add_icon_to_image(left_image, self.logo_path, (500, 1270))
+        self.add_icon_to_image(right_image, self.logo_path, (500, 1270))
+        return left_image, right_image
 
     # type1으로만 페이지 생성하기
     def split_text_type1(self, text, font, line_spacing):
@@ -375,7 +344,6 @@ class ImageGenerator:
         # type1으로 모두 만들수 있는 경우
         text_length = len(text)
         text_type_list = []
-        #print(f"image_count:{image_count} textl:{text_length}")
         if text_length < image_count * self.type1_text_length:
             for i in range(image_count):
                 text_type_list.append("type1")
@@ -427,30 +395,27 @@ class ImageGenerator:
             draw.text((x, y), line, font=font, fill=text_color)
             y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
-
-    def resize_alpha_adjust_type1(self, image, image_id):
-        resized_image = self.resize_image_type1(image, image_id)
-        result_image = self.apply_alpha_gradient_type1(resized_image, image_id)
+    def resize_alpha_adjust_type1(self, image):
+        resized_image = self.resize_image_type1(image)
+        result_image = self.apply_alpha_gradient_type1(resized_image)
         return result_image
 
+    def resize_alpha_adjust_type2(self, image):
+        resized_image = self.resize_image_type2(image)
+        left_image, right_image = self.split_apply_alpha_gradient_type2(resized_image)
+        return left_image, right_image
 
-    def resize_alpha_adjust_type2(self, image_path, image_id):
-        processing1_image_path = self.resize_image_type2(image_path, image_id)
-        left_path, right_path = self.split_apply_alpha_gradient_type2(processing1_image_path, image_id)
-        return left_path, right_path
-
-    def add_text_type1(self, image_path, lines, font, line_spacing, article_type, index, image_id):
+    def add_text_type1(self, image, lines, font, line_spacing, article_type):
         """
         이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
         """
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
         position = (120, 810)  # 텍스트를 추가할 위치 (x, y)
         box_size = self.type1_textbox_size  # 텍스트 박스 크기 (width, height)
         text_color = (255, 255, 255)  # 흰색
         box_color = (255, 255, 255)
 
         # 이미지 로드
-        image = Image.open(image_path).convert('RGBA')
+        image = image.convert('RGBA')
         draw = ImageDraw.Draw(image)
 
         line_path = self.select_article_line(article_type, "type1")
@@ -468,17 +433,12 @@ class ImageGenerator:
             y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
         result_image = image.convert('RGB')  # RGBA를 RGB로 변환
-        # 결과 저장
-        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
-        output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".jpg")
-        result_image.save(output_path)
-        os.remove(image_path)
+        return result_image
 
-    def add_text_type2(self, image_path, lines, font, line_spacing, article_type, index, left_or_right, image_id):
+    def add_text_type2(self, image, lines, font, line_spacing, article_type, left_or_right):
         """
             이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
         """
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
         if left_or_right == "left":
             position = (90, 150)  # 텍스트를 추가할 위치 (x, y)
             line_position = (40, 150)  # (x, y)
@@ -490,7 +450,7 @@ class ImageGenerator:
         box_color = (255, 255, 255)
 
         # 이미지 로드
-        image = Image.open(image_path).convert('RGBA')
+        image = image.convert('RGBA')
         draw = ImageDraw.Draw(image)
 
         line_path = self.select_article_line(article_type, "type2")
@@ -509,12 +469,8 @@ class ImageGenerator:
                 draw.text((x + max_width - text_width, y), line, font=font, fill=text_color)
             y += draw.textbbox((0, 0), line, font=font)[3] + line_spacing
 
-        result_image = image.convert('RGB')  # RGBA를 RGB로 변환
-        # 결과 저장
-        save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(image_id))
-        output_path = os.path.join(save_dir, image_name + "_index_" + str(index) + ".jpg")
-        result_image.save(output_path)
-        os.remove(image_path)
+        result_image = image.convert('RGB')
+        return result_image
 
     def create_title_image(self, image_path, title, sub_title, article_type, article_id):
         title_box_size = (900, 170)
@@ -528,7 +484,7 @@ class ImageGenerator:
         min_sub_title_font_size = 30
         fix_size_value = 3
         image = Image.open(image_path)
-        resized_image = self.resize_alpha_adjust_type1(image, article_id)
+        resized_image = self.resize_alpha_adjust_type1(image)
         self.add_title_icon_to_image(resized_image, article_type)
         subtitle_color = self.select_subtitle_font_color(article_type)
         while title_font_size > min_title_font_size and sub_title_font_size > min_sub_title_font_size:
@@ -541,24 +497,17 @@ class ImageGenerator:
                 # 부제목 추가
                 self.add_text_to_image(image, sub_title, sub_title_position, sub_title_font, sub_title_box_size, subtitle_color, 7, "sub_title")
                 result_image = image.convert('RGB')
-                #save_dir = os.path.join(os.path.join(self.prefix_after_processing_path, datetime.now().strftime("%y-%m-%d")), str(article_id))
-                #title_image_path = os.path.join(save_dir, "title_image.jpg")
-                #result_image.save(title_image_path)
-                #os.remove(resized_image)
-                self.s3_manager.upload_image(result_image, self.prefix_after_processing_path, article_id, "title_image.jpeg")
+                self.s3_manager.upload_image(result_image, self.after_processing_image_path, article_id, "maincontent_0")
                 break
             except CustomException.OutOfTextBox as e:
                 if e.type == "title":
                     title_font_size -= fix_size_value
-                    print(f"{title_font_size} , title 사이즈 조정")
                 elif e.type == "sub_title":
                     sub_title_font_size -= fix_size_value
-                    print(f"{sub_title_font_size} , sub title 사이즈 조정")
         if title_font_size <= min_title_font_size or sub_title_font_size <= min_sub_title_font_size:
-            print("최소 폰트 크기 도달: title_font_size={}, sub_title_font_size={}".format(title_font_size, sub_title_font_size))
+            self.logger.info("최소 폰트 크기 도달: title_font_size={}, sub_title_font_size={}".format(title_font_size, sub_title_font_size))
         else:
-            print(f"타이틀 이미지 저장 성공 {article_id}")
-
+            self.logger.info(f"타이틀 이미지 저장 성공 {article_id}")
 
     # type1 textbox size로 페이지 갯수를 미리 계산할 경우 사용할 이미지 선택
     def select_type1_image_index(self, need_page_count, image_count):
@@ -577,34 +526,50 @@ class ImageGenerator:
             select_image_index_list[i] += 1
         return select_image_index_list
 
-    def get_image_path_list(self, article_id=None, keyword_list=None):
-        if article_id is not None:
-            image_list = self.database.get_images_by_article_id(article_id)
+    def get_original_image_path_list(self, article_sequence=None, keyword_list=None):
+        if article_sequence is not None:
+            image_list = self.database.get_images_by_article_sequence(article_sequence)
         elif keyword_list is not None:
             image_list = self.database.get_images_by_keyword_list(keyword_list)
             image_list.extend(self.database.get_pair_images_by_keyword_list(keyword_list))
         if len(image_list) == 0:
-            raise CommonError(ErrorCode.NOMATCH_IMAGE, "메인 컨텐츠 생성 적합한 이미지 없음", article_id + keyword_list)
+            self.database.update_image_created(article_sequence)
+            raise CommonError(ErrorCode.NOMATCH_IMAGE, f"메인 컨텐츠 생성 적합한 이미지 없음 seq : {article_sequence} keywordList : {keyword_list}")
         image_path_list = []
         for image in image_list:
-            image_path_list.append(self.image_source_path + image.get("image_name") + ".png")
+            image_path_list.append(f"{self.original_image_path}/{image.get('image_name')}.jpeg")
         return image_path_list
 
-
     #type1 으로만 만들기
-    def create_main_image_only_type1(self, article_type, divided_text_list, font, image_path_list, select_image_index_list, image_id):
+    def create_main_image_only_type1(self, article_type, divided_text_list, font, image_path_list, select_image_index_list, article_id):
         text_num = 0
         for index, image_usage_count in enumerate(select_image_index_list):
             image_path = image_path_list[index]
             for i in range(image_usage_count):
                 text = divided_text_list[text_num]
-                resize_image_path = self.resize_alpha_adjust_type1(image_path, image_id)
-                self.add_text_type1(resize_image_path, text, font, self.main_content_line_spacing, article_type, index)
+                image = Image.open(image_path)
+                resized_image = self.resize_alpha_adjust_type1(image)
+                result_image = self.add_text_type1(resized_image, text, font, self.main_content_line_spacing, article_type)
+                self.s3_manager.upload_image(result_image, self.after_processing_image_path, article_id, f"maincontent_{index}")
                 text_num += 1
+
+    def _initialize_font(self):
+        return ImageFont.truetype(self.font_path, self.main_content_font_size)
+
+    def create_main_content_type1(self, image, words, font, article_type):
+        remain_words, text = self.extract_text_for_one_page(words, font, self.main_content_line_spacing, "type1")
+        resized_image = self.resize_alpha_adjust_type1(image)
+        result_image = self.add_text_type1(resized_image, text, font, self.main_content_line_spacing, article_type)
+        return result_image, remain_words
+
+    def create_main_content_type2(self, image, words, font, article_type, left_or_right):
+        remain_words, text = self.extract_text_for_one_page(words, font, self.main_content_line_spacing, "type2")
+        image = self.add_text_type2(image, text, font, self.main_content_line_spacing, article_type, left_or_right)
+        return image, remain_words
 
     #주어진 사진 갯수와 컨텐츠 내용을 기반으로 이미지 생성
     def create_main_content(self, text, image_path_list, article_type, article_id, only_type1=None):
-        font = ImageFont.truetype(self.font_path, self.main_content_font_size)
+        font = self._initialize_font()
         # type1으로만 생성
         image_count = len(image_path_list)
         if only_type1:
@@ -616,27 +581,28 @@ class ImageGenerator:
             # type2 계산
             text_type_list = self.predict_type_mix(text, image_count)
             words = text.split(' ')
-            image_index = 0
+            image_index = 1
             for index, text_type in enumerate(text_type_list):
                 if text_type == "type1" and len(words) != 0:
-                    left_words, lines = self.extract_text_for_one_page(words, font, self.main_content_line_spacing, text_type)
-                    save_path = self.resize_alpha_adjust_type1(image_path_list[index], article_id)
+                    image = Image.open(image_path_list[index])
+                    result_image, words = self.create_main_content_type1(image, words, font, article_type)
+                    self.s3_manager.upload_image(result_image, self.after_processing_image_path, article_id, f"maincontent_{image_index}")
                     image_index += 1
-                    self.add_text_type1(save_path, lines, font, self.main_content_line_spacing, article_type, image_index, article_id)
-                    words = left_words
+
                 elif text_type == "type2" and len(words) != 0:
-                    left_path, right_path = self.resize_alpha_adjust_type2(image_path_list[index], article_id)
-                    left_words, left_lines = self.extract_text_for_one_page(words, font, self.main_content_line_spacing, text_type)
+                    image = Image.open(image_path_list[index])
+                    left_image, right_image = self.resize_alpha_adjust_type2(image)
+                    left_main_content, words  = self.create_main_content_type2(left_image, words, font, article_type, "left")
+                    right_main_content, words = self.create_main_content_type2(right_image, words, font,article_type, "right")
+
+                    self.s3_manager.upload_image(left_main_content, self.after_processing_image_path, article_id, f"maincontent_{image_index}")
                     image_index += 1
-                    self.add_text_type2(left_path, left_lines, font, self.main_content_line_spacing, article_type, image_index, "left", article_id)
-                    left_words, right_lines = self.extract_text_for_one_page(left_words, font, self.main_content_line_spacing, text_type)
+                    self.s3_manager.upload_image(right_main_content, self.after_processing_image_path, article_id, f"maincontent_{image_index}")
                     image_index += 1
-                    self.add_text_type2(right_path, right_lines, font, self.main_content_line_spacing, article_type, image_index, "right", article_id)
-                    words = left_words
             # 예측 후 생성하였는데 text가 남은경우 type1으로 생성
             while len(words) != 0:
-                left_words, lines = self.extract_text_for_one_page(words, font, self.main_content_line_spacing, "type1")
-                save_path = self.resize_alpha_adjust_type1(image_path_list[len(image_path_list)-1], article_id)
+                image = Image.open(image_path_list[len(image_path_list)-1])
+                result_image, words = self.create_main_content_type1(image, words, font, article_type)
+                self.s3_manager.upload_image(result_image, self.after_processing_image_path, article_id, f"maincontent_{image_index}")
                 image_index += 1
-                self.add_text_type1(save_path, lines, font, self.main_content_line_spacing, article_type, image_index, article_id)
-                words = left_words
+
