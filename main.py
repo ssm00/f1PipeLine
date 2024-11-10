@@ -11,22 +11,22 @@ from tqdm import tqdm
 from Db import f1Db
 from util import logger
 from instagram.instagram_uploader import InstagramUploader
-from Slack.SlackManager import SlackManager
+from Slack.SlackClient import SlackClient
 from aws.s3 import S3Manager
 
 class F1Main:
 
-    def __init__(self, database, meta_data, slack_manager, logger):
+    def __init__(self, database, meta_data, logger):
         self.database = database
         self.logger = logger
         self.meta_data = meta_data
         self.s3 = S3Manager()
-        self.f1_crawler = F1PageCrawler(database, meta_data.crawler_properties, meta_data.image_save_path, logger)
+        self.f1_crawler = F1PageCrawler(database, meta_data.image_save_path, logger)
         self.topic_modeling = TopicModeling(database, meta_data.topic_modeling_properties)
         self.image_generator = ImageGenerator(database, meta_data.image_generator_info, meta_data.image_save_path, logger)
         self.instagram_uploader = InstagramUploader(meta_data.account_info, logger)
         self.article_translator = ArticleTranslator(meta_data.prompt, meta_data.key)
-        self.slack_manager = slack_manager
+        self.slack_manager = SlackClient(database, meta_data.account_info, logger)
         self.date_range = meta_data.crawler_properties.get("total_crawling_date_from_today")
 
     def cleanup(self):
@@ -34,7 +34,7 @@ class F1Main:
             self.database.close()
 
     def run_crawling(self, count):
-        for i in tqdm(range(1,count)):
+        for i in tqdm(range(1,count+1)):
             self.f1_crawler.run(i)
 
     def test_topic_modeling(self):
@@ -56,9 +56,10 @@ class F1Main:
             image_path_list = self.image_generator.get_original_image_path_list(article_sequence=article_sequence)
             self.image_generator.create_title_image(image_path_list[0], attention_grabbing_title, click_bait_title, article_type, article_sequence)
             self.image_generator.create_main_content(text, image_path_list, article_type, article_sequence)
-            self.database.update_image_created(article_sequence)
+            self.database.update_image_created(article_sequence, True)
             self.logger.info(f"seq : {article_sequence} 이미지 생성 성공")
         except CommonError as e:
+            self.database.update_image_created(article_sequence, False)
             self.logger.warning(e.to_dict())
 
     def _v1_one_article_translate(self):
@@ -111,3 +112,8 @@ class F1Main:
         image_list = self.s3.get_all_today_image()
         self.slack_manager.show_image_list(image_list)
 
+    def daily_work(self):
+        self.run_crawling(5)
+        self.v1_article_translate_batch()
+        self.v1_make_img_batch()
+        self.show_all_image()
