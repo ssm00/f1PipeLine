@@ -29,7 +29,7 @@ class BasicArticleInfo:
 
 class F1PageCrawler:
 
-    def __init__(self, database, crawler_properties_json, image_save_path, logger):
+    def __init__(self, database, image_save_path, logger):
         self.database = database
         self.logger = logger
         self.main_page_url = "https://www.formula1.com/en/latest/all?articleFilters=&page="
