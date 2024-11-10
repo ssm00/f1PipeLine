@@ -11,7 +11,8 @@ from MyMetaData.metadata import MetaData
 from main import F1Main
 from util.logger import LogManager, LogType
 import traceback
-
+from instagram.instagram_uploader import InstagramUploader
+from Slack.SlackClient import SlackBot
 
 class JobExecutor:
 
@@ -55,19 +56,16 @@ class JobExecutor:
             parts.append(f"{seconds:.3f}초")
         return " ".join(parts)
 
-    def execute_f1_crawling(self):
+    def execute_f1_daily_work(self):
         start_time = datetime.now()
         self.job_db = self.creat_job_db()
         try:
-            job_id = self.job_db.create_job("F1 데이터 수집")
-
-            # F1 크롤링 실행
+            job_id = self.job_db.create_job("F1 일일 기사 생성")
             f1_log = self.log_manager.get_logger("f1_program", LogType.PROGRAM)
             f1_db = f1Db.Database(self.meta_data.db_info.get("mysql"), f1_log)
-
             try:
-                f1_main = F1Main(f1_db, f1_log, self.meta_data)
-                f1_main.run_crawling(5)
+                f1_main = F1Main(f1_db, self.meta_data, f1_log)
+                f1_main.daily_work()
                 status = 'SUCCESS'
                 error_msg = None
             except Exception as e:
@@ -120,15 +118,16 @@ class Scheduler:
 
     def add_jobs(self):
         self.scheduler.add_job(
-            self.job_executor.execute_f1_crawling,
-            trigger=CronTrigger(**self.meta_data.scheduler_info['jobs']['test_crawling']['schedule']),
-            id='f1_crawling',
-            name='F1 데이터 수집',
-            replace_existing=True
+            self.job_executor.execute_f1_daily_work,
+            trigger=CronTrigger(**self.meta_data.scheduler_info['jobs']['daily_f1_work']['schedule']),
+            #trigger=DateTrigger(run_date=datetime.now()),
+            id='f1_daily_job',
+            name='F1_daily_create_article',
+            replace_existing=True,
+            max_instances=1,
         )
 
     def start(self):
-        """스케줄러 시작"""
         try:
             self.add_jobs()
             self.scheduler.start()
@@ -138,7 +137,6 @@ class Scheduler:
             raise
 
     def shutdown(self):
-        """스케줄러 종료"""
         self.job_executor.stop_running_jobs()
         self.scheduler.shutdown()
         self.logger.info("스케줄러가 종료되었습니다.")
@@ -146,7 +144,15 @@ class Scheduler:
 
 def main():
     try:
+        log_manager = LogManager("./logs")
+        logger = log_manager.get_logger("main", LogType.BATCH)
         meta_data = MetaData()
+
+        f1db = f1Db.Database(meta_data.db_info.get("mysql"), logger)
+        instagram_uploader = InstagramUploader(meta_data.account_info, logger)
+        slack_bot = SlackBot(meta_data.account_info, instagram_uploader, f1db, logger)
+        slack_bot.start()
+
         scheduler = Scheduler(meta_data)
         scheduler.start()
 
@@ -155,10 +161,8 @@ def main():
                 pass
         except (KeyboardInterrupt, SystemExit):
             scheduler.shutdown()
-
+            slack_bot.stop()
     except Exception as e:
-        log_manager = LogManager("./logs")
-        logger = log_manager.get_logger("main", LogType.BATCH)
         logger.error(f"프로그램 실행 중 오류 발생: {traceback.format_exc()}")
 
 
