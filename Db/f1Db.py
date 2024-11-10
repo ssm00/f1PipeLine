@@ -64,9 +64,9 @@ class Database:
         self.cursor.execute(query, values)
         self.commit()
 
-    def update_image_created(self, sequence):
-        update_query = f"update article set image_created = true where sequence = (%s)"
-        self.cursor.execute(update_query, sequence)
+    def update_image_created(self, sequence, value):
+        update_query = f"update article set image_created = (%s) where sequence = (%s)"
+        self.cursor.execute(update_query, (value, sequence))
         self.commit()
 
     def get_one_article_by_date_range(self, date_range):
