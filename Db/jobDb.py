@@ -52,8 +52,7 @@ class Database:
                 end_time = %s,
                 error_message = %s,
                 duration = %s,
-                formatted_duration = %s,
-                updated_at = %s
+                formatted_duration = %s
             WHERE id = %s
         """
         self.execute(query, (
@@ -62,7 +61,6 @@ class Database:
             error_message,
             duration,
             formatted_duration,
-            datetime.now(),
             job_id
         ))
         self.commit()
