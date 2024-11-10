@@ -533,7 +533,6 @@ class ImageGenerator:
             image_list = self.database.get_images_by_keyword_list(keyword_list)
             image_list.extend(self.database.get_pair_images_by_keyword_list(keyword_list))
         if len(image_list) == 0:
-            self.database.update_image_created(article_sequence)
             raise CommonError(ErrorCode.NOMATCH_IMAGE, f"메인 컨텐츠 생성 적합한 이미지 없음 seq : {article_sequence} keywordList : {keyword_list}")
         image_path_list = []
         for image in image_list:
