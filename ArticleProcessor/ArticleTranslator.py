@@ -105,3 +105,5 @@ class ArticleTranslator:
             return parsed_content
         except (anthropic.InternalServerError, anthropic.BadRequestError) as err:
             self.api_error(err)
+        except json.decoder.JSONDecodeError as err:
+            raise CommonError(ErrorCode.JSON_DECODE_ERROR, "JSON { 찾아도 디코딩 실패", err)
