@@ -109,8 +109,13 @@ class F1Main:
             self.logger.warning(e.to_dict())
 
     def show_all_image(self):
-        image_list = self.s3.get_all_today_image()
-        self.slack_manager.show_image_list(image_list)
+        try:
+            image_list = self.s3.get_all_today_image()
+            self.slack_manager.show_image_list(image_list)
+            self.logger.info("slack 이미지 전송 완료")
+        except Exception as e:
+            self.logger.info(f"slack 이미지 전송 실패 메시지 {e}")
+
 
     def daily_work(self):
         self.run_crawling(5)
