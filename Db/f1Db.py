@@ -5,7 +5,7 @@ from datetime import datetime
 from datetime import timedelta
 from itertools import combinations
 import json
-import logging
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
 
 class LoginInfo:
@@ -37,17 +37,23 @@ class Article:
 
 class Database:
     def __init__(self, db_info, logger):
+        self.db_info = db_info
+        self.logger = logger
+        self.db = None
+        self.cursor = None
+        self.connect()
+
+    def connect(self):
         try:
-            self.type = db_info["type"]
             self.db = pymysql.connect(
-                host=db_info['host'],
-                user=db_info['id'],
-                password=db_info['password'],
-                db=db_info['db'],
+                host=self.db_info['host'],
+                user=self.db_info['id'],
+                password=self.db_info['password'],
+                db=self.db_info['db'],
                 charset='utf8mb4',
             )
             self.cursor = self.db.cursor(pymysql.cursors.DictCursor)
-            self.logger = logger
+            self.logger.info("데이터베이스 연결 성공")
         except Exception as e:
             self.logger.error(f"데이터베이스 연결 실패: {e}")
             raise
@@ -132,7 +138,7 @@ class Database:
         return translate_content.get("attentionGrabbingTitle")
 
     def get_title_sequence_list(self, date_str):
-        select_query = "select sequence, translate_content from article where Date(collected_at) = (%s) and translate_content is not null"
+        select_query = "select sequence, translate_content from article where Date(collected_at) = (%s) and translate_content is not null and image_created = true"
         find_all = self.fetch_all(select_query, date_str)
         sequence_title = [{"sequence":find.get("sequence"), "title":json.loads(find.get("translate_content")).get("attentionGrabbingTitle")} for find in find_all]
         return sequence_title
