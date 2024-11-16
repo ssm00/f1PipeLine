@@ -103,7 +103,16 @@ class Scheduler:
         scheduler_info = self.meta_data.scheduler_info
 
         jobstores = {
-            'default': SQLAlchemyJobStore(url=scheduler_info.get("job_store_url"))
+            'default': SQLAlchemyJobStore(
+                url=scheduler_info.get("job_store_url"),
+                engine_options={
+                    'pool_recycle': 3600,
+                    'pool_pre_ping': True,
+                    'pool_size': 5,
+                    'max_overflow': 10
+                }
+
+            )
         }
 
         executors = {
@@ -122,12 +131,13 @@ class Scheduler:
     def add_jobs(self):
         self.scheduler.add_job(
             self.job_executor.execute_f1_daily_work,
-            trigger=CronTrigger(**self.meta_data.scheduler_info['jobs']['daily_f1_work']['schedule']),
+            trigger=CronTrigger(hour=self.meta_data.scheduler_info['jobs']['daily_f1_work']['schedule']['hour'], minute=self.meta_data.scheduler_info['jobs']['daily_f1_work']['schedule']['minute']),
             #trigger=DateTrigger(run_date=datetime.now()),
             id='f1_daily_job',
             name='F1_daily_create_article',
             replace_existing=True,
         )
+        self.logger.info("F1_daily_create_article 추가")
 
     def start(self):
         try:
@@ -169,6 +179,7 @@ def main():
         try:
             while scheduler_thread.is_alive():
                 time.sleep(10)
+            logger.warning("스케줄러 스레드 stop")
         except (KeyboardInterrupt, SystemExit):
             scheduler.shutdown()
             slack_bot.stop()
