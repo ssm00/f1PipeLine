@@ -84,5 +84,5 @@ class InstagramUploader:
             return post_id
 
         except Exception as e:
-            self.logger.warn(f"Error publishing carousel post: {e}")
+            self.logger.warning(f"Error publishing carousel post: {e}")
             return None
