@@ -70,9 +70,9 @@ class Database:
         self.cursor.execute(query, values)
         self.commit()
 
-    def update_image_created(self, sequence, value):
-        update_query = f"update article set image_created = (%s) where sequence = (%s)"
-        self.cursor.execute(update_query, (value, sequence))
+    def update_image_created(self, sequence):
+        update_query = f"update article set image_created_at = (%s) where sequence = (%s)"
+        self.cursor.execute(update_query, (datetime.now(), sequence))
         self.commit()
 
     def get_one_article_by_date_range(self, date_range):
@@ -95,7 +95,7 @@ class Database:
         now = datetime.now()
         start_date = now - timedelta(days=date_range - 1)
         end_date = now + timedelta(days=1)
-        get_one_article_query = "select sequence, article_id, translate_content from article where published_at between Date(%s) and Date(%s) and translate_content is not null and image_created = false order by sequence desc "
+        get_one_article_query = "select sequence, article_id, translate_content from article where published_at between Date(%s) and Date(%s) and translate_content is not null and image_created_at is null order by sequence desc "
         values = (start_date, end_date)
         return self.fetch_all(get_one_article_query, values)
 
@@ -138,7 +138,7 @@ class Database:
         return translate_content.get("attentionGrabbingTitle")
 
     def get_title_sequence_list(self, date_str):
-        select_query = "select sequence, translate_content from article where Date(collected_at) = (%s) and translate_content is not null and image_created = true"
+        select_query = "select sequence, translate_content from article where Date(image_created_at) = (%s)"
         find_all = self.fetch_all(select_query, date_str)
         sequence_title = [{"sequence":find.get("sequence"), "title":json.loads(find.get("translate_content")).get("attentionGrabbingTitle")} for find in find_all]
         return sequence_title

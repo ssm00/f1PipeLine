@@ -31,9 +31,7 @@ class SlackBot:
         def handle_date_selection(ack, body):
             ack()
             selected_date = body["actions"][0]["selected_date"]
-
             title_sequence_list = self.database.get_title_sequence_list(selected_date)
-
             if title_sequence_list:
                 self.send_sequence_select(selected_date, title_sequence_list)
             else:

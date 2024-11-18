@@ -56,10 +56,9 @@ class F1Main:
             image_path_list = self.image_generator.get_original_image_path_list(article_sequence=article_sequence)
             self.image_generator.create_title_image(image_path_list[0], attention_grabbing_title, click_bait_title, article_type, article_sequence)
             self.image_generator.create_main_content(text, image_path_list, article_type, article_sequence)
-            self.database.update_image_created(article_sequence, True)
+            self.database.update_image_created(article_sequence)
             self.logger.info(f"seq : {article_sequence} 이미지 생성 성공")
         except CommonError as e:
-            self.database.update_image_created(article_sequence, False)
             self.logger.warning(e.to_dict())
 
     def _v1_one_article_translate(self):
