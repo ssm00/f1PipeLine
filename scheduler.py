@@ -1,21 +1,19 @@
 import threading
 import time
-
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
-import logging
 from multiprocessing import Process, freeze_support
-from apscheduler.triggers.date import DateTrigger
 from Db import jobDb, f1Db
 from MyMetaData.metadata import MetaData
 from main import F1Main
 from util.logger import LogManager, LogType
 import traceback
-from instagram.instagram_uploader import InstagramUploader
-from Slack.SlackClient import SlackBot
+
+from apscheduler.events import EVENT_SCHEDULER_STARTED, EVENT_SCHEDULER_SHUTDOWN, EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
+
 
 class JobExecutor:
 
@@ -123,10 +121,14 @@ class Scheduler:
         scheduler = BackgroundScheduler(
             jobstores=jobstores,
             executors=executors,
-            timezone='Asia/Seoul'
+            timezone='Asia/Seoul',
+            daemon=False
         )
 
+
         return scheduler
+
+
 
     def add_jobs(self):
         self.scheduler.add_job(
@@ -137,6 +139,7 @@ class Scheduler:
             name='F1_daily_create_article',
             replace_existing=True,
         )
+
         self.logger.info("F1_daily_create_article 추가")
 
     def start(self):
@@ -153,36 +156,23 @@ class Scheduler:
         self.scheduler.shutdown()
         self.logger.info("스케줄러가 종료되었습니다.")
 
-def start_slack_bot(meta_data, logger):
-    f1db = f1Db.Database(meta_data.db_info.get("mysql"), logger)
-    instagram_uploader = InstagramUploader(meta_data.account_info, logger)
-    slack_bot = SlackBot(meta_data.account_info, instagram_uploader, f1db, logger)
-    slack_bot.start()
-    return slack_bot
-
 def main():
     try:
-        print("start")
         log_manager = LogManager("./logs")
         logger = log_manager.get_logger("main", LogType.BATCH)
         meta_data = MetaData()
 
-        # 스케줄러 스레드 시작
         scheduler = Scheduler(meta_data)
-        scheduler_thread = threading.Thread(target=scheduler.start)
-        scheduler_thread.start()
+        scheduler.start()
 
-        # Slack 봇 스레드 시작
-        slack_bot = start_slack_bot(meta_data, logger)
-
-        # 메인 스레드를 통한 유지 관리 (대기)
         try:
-            while scheduler_thread.is_alive():
+            while True:
                 time.sleep(10)
-            logger.warning("스케줄러 스레드 stop")
         except (KeyboardInterrupt, SystemExit):
             scheduler.shutdown()
-            slack_bot.stop()
+        except Exception as e:
+            logger.error(f"스케줄러 메인 루프에서 오류 발생: {e} {traceback.format_exc()}")
+
 
     except Exception as e:
         logger.error(f"프로그램 실행 중 오류 발생: {traceback.format_exc()}")
