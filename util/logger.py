@@ -10,6 +10,7 @@ class LogType(Enum):
     PROGRAM = "program"
     BATCH = "batch"
     TEST = "test"
+    SLACK_BOT = "slack_bot"
 
 class LogManager:
     def __init__(self, base_dir):
