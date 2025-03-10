@@ -380,10 +380,6 @@ class ImageGenerator:
 
 
     def add_text_to_image(self, image, text, position, font, box_size, text_color, line_spacing, text_type=None):
-        """
-        이미지에 텍스트 박스를 추가하고 그 안에 텍스트를 작성합니다.
-        """
-        # 이미지 로드
         draw = ImageDraw.Draw(image)
 
         # 텍스트 줄바꿈 처리
